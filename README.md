@@ -4,9 +4,11 @@ This is going to be a project built by me consisting in a search engine designed
 
 ## Features
 
-- [ ] Search by filename
-- [ ] Search by metadata
-- [ ] Search by words inside files
+- [ ] Crawl local content
+- [ ] Filter unwanted data (configurable at runtime)
+- [ ] Store data into database
+- [ ] File previews are crucial
+- [ ] Content search over contextual files (single/multi word, name, path, extensions)
 
 ## Notes
 
