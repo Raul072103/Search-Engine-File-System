@@ -12,6 +12,13 @@ This is going to be a project built by me consisting in a search engine designed
 
 - USN Journal
 - Master-slave format
+- Not going to take into consideration links from the start
+- What about hidden files?
+
+## Search Criteria
+- Single/multi world 
+- Name
+- Extension
 
 ## System Requirements
 
