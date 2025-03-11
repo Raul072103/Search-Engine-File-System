@@ -8,6 +8,11 @@ This is going to be a project built by me consisting in a search engine designed
 - [ ] Search by metadata
 - [ ] Search by words inside files
 
+## Notes
+
+- USN Journal
+- Master-slave format
+
 ## System Requirements
 
 ### 1. Text search
