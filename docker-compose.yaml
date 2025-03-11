@@ -1,0 +1,21 @@
+services:
+  db:
+    image: postgres:latest
+    container_name: file_system_database
+    environment:
+      POSTGRES_DB: file_system_database
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin_password
+    networks:
+      - backend
+    volumes:
+      - postgres_db:/var/lib/postgresql/data
+    ports:
+      - '5434:5432'
+
+volumes:
+  postgres_db:
+
+networks:
+  backend:
+    driver: bridge
