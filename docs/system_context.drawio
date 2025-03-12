@@ -1,9 +1,12 @@
-<mxfile host="drawio-plugin" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36" modified="2025-03-12T10:40:32.163Z" etag="gWUMC6OGMUmUMHZMVKPc" version="22.1.22" type="embed">
+<mxfile host="drawio-plugin" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36" modified="2025-03-12T11:53:54.108Z" etag="jFbqmb8bHVg3QQaQxa14" version="22.1.22" type="embed">
   <diagram name="Page-1" id="aDfYw-BN5jbU1ruuTaVY">
-    <mxGraphModel dx="814" dy="631" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+    <mxGraphModel dx="2003" dy="1993" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
+        <mxCell id="5" value="" style="whiteSpace=wrap;html=1;aspect=fixed;" vertex="1" parent="1">
+          <mxGeometry x="-145" y="-20" width="790" height="790" as="geometry" />
+        </mxCell>
         <mxCell id="ftyzSwXF0QH7UMBQsC2A-1" value="&lt;b&gt;MyFilleExplorer&lt;/b&gt;&lt;div&gt;[ Software System ]&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;&lt;i&gt;MyFileExplorer is a file explorer with the purpose of faster search through the user&#39;s file system.&lt;/i&gt;&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#eeeeee;strokeColor=#36393d;" parent="1" vertex="1">
           <mxGeometry x="130" y="290" width="240" height="130" as="geometry" />
         </mxCell>
@@ -16,7 +19,7 @@
             <mxPoint x="420" y="300" as="targetPoint" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="ftyzSwXF0QH7UMBQsC2A-4" value="Search for files based on&lt;div&gt;words, file metadata, names&amp;nbsp;&lt;/div&gt;&lt;div&gt;and more.&lt;/div&gt;" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" parent="ftyzSwXF0QH7UMBQsC2A-3" vertex="1" connectable="0">
+        <mxCell id="ftyzSwXF0QH7UMBQsC2A-4" value="Search for files based on&lt;div style=&quot;font-size: 14px;&quot;&gt;words, file metadata, names&amp;nbsp;&lt;/div&gt;&lt;div style=&quot;font-size: 14px;&quot;&gt;and more.&lt;/div&gt;" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=14;labelBackgroundColor=none;" parent="ftyzSwXF0QH7UMBQsC2A-3" vertex="1" connectable="0">
           <mxGeometry x="-0.0114" relative="1" as="geometry">
             <mxPoint as="offset" />
           </mxGeometry>
@@ -30,9 +33,9 @@
             <mxPoint x="400" y="570" as="targetPoint" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="ftyzSwXF0QH7UMBQsC2A-7" value="Gets information regarding all&lt;div&gt;files currently found in the system.&lt;/div&gt;" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" parent="ftyzSwXF0QH7UMBQsC2A-6" vertex="1" connectable="0">
+        <mxCell id="ftyzSwXF0QH7UMBQsC2A-7" value="Gets information regarding all&lt;div style=&quot;font-size: 14px;&quot;&gt;files currently found in the system.&lt;/div&gt;" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];labelBackgroundColor=none;fontSize=14;" parent="ftyzSwXF0QH7UMBQsC2A-6" vertex="1" connectable="0">
           <mxGeometry x="-0.0174" y="3" relative="1" as="geometry">
-            <mxPoint as="offset" />
+            <mxPoint x="-139" as="offset" />
           </mxGeometry>
         </mxCell>
         <mxCell id="2" value="&lt;span style=&quot;font-size: 14px; background-color: initial;&quot;&gt;&lt;b&gt;USN Journal&lt;br&gt;&lt;/b&gt;[Windows File Changes Journal]&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#cce5ff;strokeColor=#36393d;" parent="1" vertex="1">
@@ -44,10 +47,13 @@
             <mxPoint x="430" y="540" as="targetPoint" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="4" value="Get updates regarding the&lt;br&gt;contents of all files." style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" parent="3" vertex="1" connectable="0">
+        <mxCell id="4" value="Get updates regarding the&lt;br style=&quot;font-size: 14px;&quot;&gt;contents of all files." style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];labelBackgroundColor=none;fontSize=14;" parent="3" vertex="1" connectable="0">
           <mxGeometry x="0.0154" y="3" relative="1" as="geometry">
-            <mxPoint y="-1" as="offset" />
+            <mxPoint x="97" y="-1" as="offset" />
           </mxGeometry>
+        </mxCell>
+        <mxCell id="6" value="Text" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="70" y="180" width="60" height="30" as="geometry" />
         </mxCell>
       </root>
     </mxGraphModel>
