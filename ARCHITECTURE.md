@@ -55,7 +55,7 @@ The system will be based on **4 independent running** containers which.
 
 ## 3. Components
 
-### Indexer
+## Indexer
 
 Its role is filling the database with data and performing necessary updates.
 
@@ -86,7 +86,7 @@ Must be the **first** and **only** component running when the system is **first*
 - separate goroutine running in the background of the Indexer which finds updates on the file
 system and sends update/delete events to the **Updates queue**
 
-### Backend
+## Backend
 
 Proxy/Middleman between the web application and the system database.
 
@@ -106,3 +106,20 @@ Proxy/Middleman between the web application and the system database.
 - reads the **config.json** file to know the configuration of the search feature
 - gets the requested resources from the **Handler** and builds the search query 
 - retrieves the data gotten from the search query
+
+## Relational Database
+
+The system uses **Postgres** as the DBMS. 
+
+Below is the schema of the database.
+
+![Alt text](./docs/images/database_diagram.png)
+
+#### files
+
+- holds the information regarding the files registered in the system
+- **searchable_tsv** will enable content search on the files
+
+#### logs
+
+- holds all the logs that occurred while the whole application is running
