@@ -16,6 +16,8 @@ This is going to be a project built by me consisting in a search engine designed
 - Master-slave format
 - Not going to take into consideration links from the start
 - What about hidden files?
+- Probably build a in-memory cache with the search results based on the timestamp (this way the most relevant results 
+are shown to the user)
 
 ## Search Criteria
 - Single/multi world 
