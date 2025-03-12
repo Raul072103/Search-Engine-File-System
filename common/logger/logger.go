@@ -9,7 +9,7 @@ import (
 func InitLogger() *zap.Logger {
 	// Configure Zap logger
 	config := zap.NewProductionConfig()
-	logFile, err := os.OpenFile("application.log", os.O_APPEND|os.O_CREATE|os.O_RDWR, 0644)
+	logFile, err := os.OpenFile("app.log", os.O_APPEND|os.O_CREATE|os.O_RDWR, 0644)
 	if err != nil {
 		panic(err)
 	}
