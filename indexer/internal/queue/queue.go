@@ -1,4 +1,4 @@
-package events
+package queue
 
 import (
 	"MyFileExporer/common/models"
@@ -13,7 +13,7 @@ const (
 )
 
 var (
-	ErrQueueEmpty = errors.New("there are no events in the queue at the moment")
+	ErrQueueEmpty = errors.New("there are no queue in the queue at the moment")
 )
 
 type DBEvent struct {

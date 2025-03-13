@@ -1,4 +1,4 @@
-package events
+package queue
 
 import (
 	"MyFileExporer/common/models"
@@ -30,7 +30,7 @@ func TestInMemoryQueue(t *testing.T) {
 	// Create a wait group to wait for all goroutines to finish
 	var wg sync.WaitGroup
 
-	// Simulate creating and testing multiple events concurrently
+	// Simulate creating and testing multiple queue concurrently
 	for i := 0; i < 10; i++ {
 		// Each goroutine gets a different event
 		dbevent := DBEvent{

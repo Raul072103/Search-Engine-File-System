@@ -2,7 +2,6 @@ package models
 
 import (
 	"fmt"
-	"strings"
 	"time"
 )
 
@@ -14,7 +13,7 @@ type File struct {
 	IsDir     bool
 	Mode      int32
 	Extension string
-	Content   []string
+	Content   string
 	UpdatedAt time.Time
 }
 
@@ -22,11 +21,6 @@ type File struct {
 // Used for debugging mainly.
 func (f *File) String() string {
 	var contentStr string
-	if f.Content != nil {
-		contentStr = strings.Join(f.Content, ", ")
-	} else {
-		contentStr = "nil"
-	}
 
 	return fmt.Sprintf(
 		"File{\n"+

@@ -5,5 +5,6 @@ import (
 )
 
 func main() {
-	fmt.Printf("this is the indexer")
+	var s = ""
+	fmt.Printf(s[:min(len(s), 200)])
 }
