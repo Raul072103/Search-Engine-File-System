@@ -1,10 +1,15 @@
 package main
 
 import (
-	"fmt"
+	"github.com/joho/godotenv"
+	"log"
 )
 
 func main() {
-	var s = ""
-	fmt.Printf(s[:min(len(s), 200)])
+	// Env file setup
+	err := godotenv.Load("./../.env")
+	if err != nil {
+		log.Fatal("Error loading .env file")
+	}
+
 }
