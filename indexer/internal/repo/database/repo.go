@@ -11,7 +11,7 @@ import (
 )
 
 var (
-	InsertFileTimeoutDuration = time.Second * 5
+	InsertFileTimeoutDuration = time.Second * 120
 
 	ErrConflict = errors.New("file already exists in database")
 )
@@ -38,8 +38,8 @@ func (r *repo) InsertFile(ctx context.Context, file *models.File) error {
 	query := `
 		INSERT INTO files (path, name, size, is_dir, mode, extension, updated_at, content, searchable_tsv)
 		VALUES ($1, $2, $3, $4, $5, $6, $7,
-		        CASE WHEN $8 IS NOT NULL THEN $8 ELSE NULL END,
-		        CASE WHEN $9 IS NOT NULL THEN to_tsvector('english', $9) ELSE NULL END)
+		        COALESCE($8::TEXT),
+		        COALESCE(to_tsvector('english', $9), NULL))
 		        RETURNING id
 	`
 

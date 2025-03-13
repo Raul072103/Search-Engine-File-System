@@ -32,7 +32,6 @@ func main() {
 	}
 
 	_ = setup()
-
 }
 
 func setup() *Application {
