@@ -4,22 +4,29 @@ import (
 	"MyFileExporer/common/env"
 	"MyFileExporer/common/logger"
 	"MyFileExporer/indexer/internal/batch"
+	"MyFileExporer/indexer/internal/crawler"
 	"MyFileExporer/indexer/internal/db"
 	"MyFileExporer/indexer/internal/queue"
 	"MyFileExporer/indexer/internal/repo/database"
+	"MyFileExporer/indexer/internal/repo/file"
 	"context"
 	"database/sql"
 	"fmt"
 	"github.com/joho/godotenv"
 	"go.uber.org/zap"
 	"log"
+	"time"
 )
 
 // Application is the entry point in the data_provider service
 type Application struct {
-	Logger *zap.Logger
-	Config ApplicationConfig
-	DBRepo database.Repo
+	Logger      *zap.Logger
+	Config      ApplicationConfig
+	DBRepo      database.Repo
+	FileRepo    file.Repo
+	Processor   batch.Processor
+	Crawler     crawler.Crawler
+	EventsQueue *queue.InMemoryQueue
 }
 
 type ApplicationConfig struct {
@@ -35,22 +42,39 @@ func main() {
 	}
 
 	app := setup()
-	eventsQueue := queue.NewQueue()
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	processor := batch.NewProcessor(app.DBRepo, eventsQueue)
+	crawlerChan := make(chan struct{})
 
 	// Start processor
 	go func() {
-		err := processor.Run(ctx)
+		err := app.Processor.Run(ctx)
 		if err != nil {
 			app.Logger.Error(err.Error())
 			return
 		}
 	}()
 
+	// Start crawler
+	go func() {
+		app.Crawler.Run(ctx)
+		crawlerChan <- struct{}{}
+	}()
+
+	// Main goroutine waits until the crawler is finish for it to finish
+	<-crawlerChan
+
+	for {
+		if app.EventsQueue.Length() > 0 {
+			time.Sleep(time.Second * 10)
+		} else {
+			break
+		}
+	}
+
+	app.Logger.Info("main goroutine finished")
 }
 
 func setup() *Application {
@@ -84,12 +108,31 @@ func setup() *Application {
 
 	app.Logger.Info("Postgres connection pool established")
 
-	// Repository
-	dbRepo := database.NewRepo(pqDB)
-
 	app.Config.PostgresDB = pqDB
 	app.Config.PostgresConfig = postgresConfig
+
+	// Database Repository
+	dbRepo := database.NewRepo(pqDB)
 	app.DBRepo = dbRepo
+
+	// File Repository
+	fileRepo := file.NewRepo()
+	app.FileRepo = fileRepo
+
+	// Events queue
+	eventsQueue := queue.NewQueue()
+
+	// Batch Processor
+	processor := batch.NewProcessor(app.DBRepo, eventsQueue, app.Logger)
+	app.Processor = processor
+
+	// File Crawler
+	crawlerConfig := crawler.Config{
+		IgnorePatterns: nil,
+		RootDir:        "C:\\Users\\raula\\Desktop\\test_directory\\",
+	}
+	fileCrawler := crawler.New(app.FileRepo, eventsQueue, app.Logger, crawlerConfig)
+	app.Crawler = fileCrawler
 
 	return &app
 }
