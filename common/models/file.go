@@ -11,7 +11,7 @@ type File struct {
 	Name      string
 	Size      int64
 	IsDir     bool
-	Mode      int32
+	Mode      uint32
 	Extension string
 	Content   string
 	UpdatedAt time.Time
