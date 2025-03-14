@@ -5,6 +5,7 @@ import (
 	"MyFileExporer/indexer/internal/repo/database"
 	"context"
 	"errors"
+	"go.uber.org/zap"
 	"time"
 )
 
@@ -20,6 +21,7 @@ type Processor interface {
 type processor struct {
 	DBRepo     database.Repo
 	EventQueue *queue.InMemoryQueue
+	logger     *zap.Logger
 }
 
 const (
@@ -34,10 +36,11 @@ var (
 )
 
 // NewProcessor creates a new instance of the Processor.
-func NewProcessor(dbRepo database.Repo, eventQueue *queue.InMemoryQueue) Processor {
+func NewProcessor(dbRepo database.Repo, eventQueue *queue.InMemoryQueue, logger *zap.Logger) Processor {
 	return &processor{
 		DBRepo:     dbRepo,
 		EventQueue: eventQueue,
+		logger:     logger,
 	}
 }
 
@@ -48,6 +51,7 @@ func (p *processor) Run(ctx context.Context) error {
 	for {
 		select {
 		case <-ctx.Done():
+			p.logger.Info("Processor stopped")
 			return nil
 		default:
 			if p.EventQueue.Length() == 0 {
@@ -57,16 +61,17 @@ func (p *processor) Run(ctx context.Context) error {
 			if p.EventQueue.Length() > 0 {
 				dbEvent, err := p.PopEvent()
 				if err != nil {
+					p.logger.Error("Couldn't pop event from events queue", zap.Error(err))
 					return err
 				}
 
 				err = p.HandleEvent(dbEvent)
 				if err != nil {
+					p.logger.Error("Couldn't handle db event", zap.Error(err))
 					return err
 				}
 			}
 		}
-
 	}
 }
 
