@@ -121,6 +121,7 @@ func setup() *Application {
 
 	// Events queue
 	eventsQueue := queue.NewQueue()
+	app.EventsQueue = eventsQueue
 
 	// Batch Processor
 	processor := batch.NewProcessor(app.DBRepo, eventsQueue, app.Logger)
