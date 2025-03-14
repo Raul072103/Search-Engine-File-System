@@ -3,8 +3,11 @@ package main
 import (
 	"MyFileExporer/common/env"
 	"MyFileExporer/common/logger"
+	"MyFileExporer/indexer/internal/batch"
 	"MyFileExporer/indexer/internal/db"
+	"MyFileExporer/indexer/internal/queue"
 	"MyFileExporer/indexer/internal/repo/database"
+	"context"
 	"database/sql"
 	"fmt"
 	"github.com/joho/godotenv"
@@ -31,7 +34,23 @@ func main() {
 		log.Fatal("Error loading .env file")
 	}
 
-	_ = setup()
+	app := setup()
+	eventsQueue := queue.NewQueue()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	processor := batch.NewProcessor(app.DBRepo, eventsQueue)
+
+	// Start processor
+	go func() {
+		err := processor.Run(ctx)
+		if err != nil {
+			app.Logger.Error(err.Error())
+			return
+		}
+	}()
+
 }
 
 func setup() *Application {

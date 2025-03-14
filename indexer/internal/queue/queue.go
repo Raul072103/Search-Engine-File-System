@@ -21,9 +21,28 @@ type DBEvent struct {
 	File models.File
 }
 
+func (d *DBEvent) IsInsert() bool {
+	return d.Type == InsertEvent
+}
+
+func (d *DBEvent) IsUpdate() bool {
+	return d.Type == UpdateEvent
+}
+
+func (d *DBEvent) IsDelete() bool {
+	return d.Type == DeleteEvent
+}
+
 type InMemoryQueue struct {
 	events []DBEvent
 	lock   sync.Mutex
+}
+
+func NewQueue() *InMemoryQueue {
+	return &InMemoryQueue{
+		events: make([]DBEvent, 0),
+		lock:   sync.Mutex{},
+	}
 }
 
 func (q *InMemoryQueue) Push(event DBEvent) {
@@ -41,4 +60,11 @@ func (q *InMemoryQueue) Pop() (DBEvent, error) {
 	event := q.events[0]
 	q.events = q.events[1:]
 	return event, nil
+}
+
+func (q *InMemoryQueue) Length() int {
+	q.lock.Lock()
+	defer q.lock.Unlock()
+
+	return len(q.events)
 }
