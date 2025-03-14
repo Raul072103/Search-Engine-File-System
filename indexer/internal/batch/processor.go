@@ -33,6 +33,7 @@ var (
 	ErrUnknownEvent        = errors.New("unknown event sent for processing")
 )
 
+// NewProcessor creates a new instance of the Processor.
 func NewProcessor(dbRepo database.Repo, eventQueue *queue.InMemoryQueue) Processor {
 	return &processor{
 		DBRepo:     dbRepo,
@@ -40,6 +41,9 @@ func NewProcessor(dbRepo database.Repo, eventQueue *queue.InMemoryQueue) Process
 	}
 }
 
+// Run is the entry point into the start of the Processor component.
+// It makes use of the context passed to it, in order to detect a STOP signal from the
+// main goroutine to gracefully shutdown.
 func (p *processor) Run(ctx context.Context) error {
 	for {
 		select {
@@ -66,6 +70,7 @@ func (p *processor) Run(ctx context.Context) error {
 	}
 }
 
+// HandleEvent handles the corresponding event based on the type of the event.
 func (p *processor) HandleEvent(event queue.DBEvent) error {
 	if event.IsInsert() {
 		return p.ExecuteInsertEvent(event)
@@ -82,10 +87,12 @@ func (p *processor) HandleEvent(event queue.DBEvent) error {
 	return ErrUnknownEvent
 }
 
+// PopEvent pops an element from the InMemoryQueue.
 func (p *processor) PopEvent() (queue.DBEvent, error) {
 	return p.EventQueue.Pop()
 }
 
+// ExecuteInsertEvent takes a INSERT event and applies an INSERT operation on the database.
 func (p *processor) ExecuteInsertEvent(event queue.DBEvent) error {
 	if !event.IsInsert() {
 		return ErrExpectedInsertEvent
@@ -95,6 +102,7 @@ func (p *processor) ExecuteInsertEvent(event queue.DBEvent) error {
 	return err
 }
 
+// ExecuteUpdateEvent takes a UPDATE event and applies an UPDATE operation on the database.
 func (p *processor) ExecuteUpdateEvent(event queue.DBEvent) error {
 	if !event.IsUpdate() {
 		return ErrExpectedUpdateEvent
@@ -104,6 +112,7 @@ func (p *processor) ExecuteUpdateEvent(event queue.DBEvent) error {
 	return err
 }
 
+// ExecuteDeleteEvent takes a DELETE event and applies a DELETE operation on the database.
 func (p *processor) ExecuteDeleteEvent(event queue.DBEvent) error {
 	if !event.IsDelete() {
 		return ErrExpectedDeleteEvent
