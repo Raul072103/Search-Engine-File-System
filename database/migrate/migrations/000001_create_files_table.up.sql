@@ -4,7 +4,7 @@ CREATE TABLE IF NOT EXISTS files (
     name text NOT NULL,
     size bigint,
     is_dir bool,
-    mode integer,
+    mode bigint,
     extension text,
     updated_at TIMESTAMP NOT NULL,
     content text,
