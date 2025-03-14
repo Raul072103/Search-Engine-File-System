@@ -11,7 +11,7 @@ This is the component that handles the initialization of the database
 
 ## TODO
 
-- [ ] Implement **Events Queue** so a set of database operations can be decided
-- [ ] Implement **Batch Processor** which takes operations from the Events Queue and applies them
-- [ ] Implement **File database initializer**
-- [ ] Implement **file crawler** (part of File database initializer)
+- [X] Implement **Events Queue** so a set of database operations can be decided
+- [X] Implement **Batch Processor** which takes operations from the Events Queue and applies them
+- [X] Implement **File database initializer**
+- [X] Implement **file crawler** (part of File database initializer)
