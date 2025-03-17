@@ -10,7 +10,7 @@ type File struct {
 	Path      string
 	Name      string
 	Size      int64
-	IsDir     bool
+	Type      FileType
 	Mode      uint32
 	Extension string
 	Content   string
@@ -28,7 +28,7 @@ func (f *File) String() string {
 			"Path: %q\n"+
 			"Name: %q\n"+
 			"Size: %d\n"+
-			"IsDir: %t\n"+
+			"Type: %v\n"+
 			"Mode: %o\n"+
 			"Extension: %q\n"+
 			"Content: [%s]\n"+
@@ -38,7 +38,7 @@ func (f *File) String() string {
 		f.Path,
 		f.Name,
 		f.Size,
-		f.IsDir,
+		f.Type,
 		f.Mode,
 		f.Extension,
 		contentStr,
