@@ -1,0 +1,1 @@
+CREATE INDEX idx_contents_search ON contents USING gin(searchable_tsv);

@@ -1,12 +1,10 @@
-CREATE TABLE IF NOT EXISTS files (
-    id bigserial PRIMARY KEY,
-    path text UNIQUE NOT NULL,
-    name text NOT NULL,
-    size bigint,
-    is_dir bool,
-    mode bigint,
-    extension text,
-    updated_at TIMESTAMP NOT NULL,
-    content text,
-    searchable_tsv tsvector
+CREATE TABLE files (
+   id SERIAL PRIMARY KEY,
+   path VARCHAR UNIQUE NOT NULL,
+   name VARCHAR,
+   size BIGINT,
+   mode BIGINT,
+   extension VARCHAR,
+   updated_at TIMESTAMP,
+   searchable_tsv TSVECTOR
 );

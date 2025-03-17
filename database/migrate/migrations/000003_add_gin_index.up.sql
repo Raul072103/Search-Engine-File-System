@@ -1,1 +1,0 @@
-CREATE INDEX idx_files_search ON files USING gin(searchable_tsv);
