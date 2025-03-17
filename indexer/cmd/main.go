@@ -11,10 +11,12 @@ import (
 	"MyFileExporer/indexer/internal/repo/file"
 	"context"
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"github.com/joho/godotenv"
 	"go.uber.org/zap"
 	"log"
+	"os"
 	"time"
 )
 
@@ -128,12 +130,27 @@ func setup() *Application {
 	app.Processor = processor
 
 	// File Crawler
-	crawlerConfig := crawler.Config{
-		IgnorePatterns: nil,
-		RootDir:        "C:\\Users\\raula\\Desktop\\test_directory\\",
-	}
+	crawlerConfig := app.loadCrawlerConfig("C:\\Users\\raula\\Desktop\\facultate\\anul 3 sem 2\\Software Design\\Project\\indexer\\config.json")
 	fileCrawler := crawler.New(app.FileRepo, eventsQueue, app.Logger, crawlerConfig)
 	app.Crawler = fileCrawler
 
 	return &app
+}
+
+// TODO() config doesn't work
+// loadCrawlerConfig reads and parses the JSON config file for indexer component.
+func (app *Application) loadCrawlerConfig(filePath string) crawler.Config {
+	configFile, err := os.ReadFile(filePath)
+	if err != nil {
+		app.Logger.Panic("Couldn't read indexer config.json", zap.Error(err))
+		panic(err)
+	}
+
+	var config crawler.Config
+	if err := json.Unmarshal(configFile, &config); err != nil {
+		app.Logger.Panic("Couldn't parse indexer config.json", zap.Error(err))
+		panic(err)
+	}
+
+	return config
 }

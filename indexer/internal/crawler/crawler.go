@@ -24,8 +24,8 @@ type crawler struct {
 }
 
 type Config struct {
-	IgnorePatterns []string
-	RootDir        string
+	IgnorePatterns []string `json:"ignore_patterns"`
+	RootDir        string   `json:"root_dir"`
 }
 
 func New(fileRepo file.Repo, eventsQueue *queue.InMemoryQueue, logger *zap.Logger, config Config) Crawler {

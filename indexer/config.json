@@ -1,6 +1,6 @@
 {
-  "rootDirectory": "C:\\Users\\raula\\Desktop\\test_directory",
-  "ignorePatterns": [
+  "root_dir": "C:\\Users\\raula\\Desktop\\test_directory\\",
+  "ignore_patterns": [
     "*/.*",
     "**/.gitignore",
     "."
