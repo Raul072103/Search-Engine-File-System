@@ -13,7 +13,7 @@ type File struct {
 	Type      FileType
 	Mode      uint32
 	Extension string
-	Content   string
+	Content   FileContent
 	UpdatedAt time.Time
 }
 

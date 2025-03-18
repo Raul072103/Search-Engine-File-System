@@ -3,6 +3,7 @@ package main
 import (
 	"MyFileExporer/common/env"
 	"MyFileExporer/common/logger"
+	"MyFileExporer/common/models"
 	"MyFileExporer/indexer/internal/batch"
 	"MyFileExporer/indexer/internal/crawler"
 	"MyFileExporer/indexer/internal/db"
@@ -32,8 +33,9 @@ type Application struct {
 }
 
 type ApplicationConfig struct {
-	PostgresDB     *sql.DB
-	PostgresConfig db.Config
+	PostgresDB      *sql.DB
+	PostgresConfig  db.Config
+	FileTypesConfig models.FileTypesConfig
 }
 
 func main() {

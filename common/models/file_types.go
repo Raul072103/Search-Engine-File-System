@@ -1,4 +1,4 @@
-package utils
+package models
 
 import (
 	"encoding/json"
@@ -7,7 +7,16 @@ import (
 
 type FileTypesConfig struct {
 	TypesMapping      map[int32]string `json:"types_mapping"`
-	ExtensionMappings map[int32]string `json:"extension_mappings"`
+	ExtensionMappings map[string]int32 `json:"extension_mappings"`
+}
+
+func (cfg *FileTypesConfig) GetTypeByExtension(extension string) string {
+	typeValue, exists := cfg.ExtensionMappings[extension]
+	if exists {
+		return cfg.TypesMapping[typeValue]
+	} else {
+		return cfg.TypesMapping[-1]
+	}
 }
 
 func ParseFileTypesConfig(filePath string) (FileTypesConfig, error) {
