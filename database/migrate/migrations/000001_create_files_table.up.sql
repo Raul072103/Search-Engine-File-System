@@ -5,6 +5,5 @@ CREATE TABLE files (
    size BIGINT,
    mode BIGINT,
    extension VARCHAR,
-   updated_at TIMESTAMP,
-   searchable_tsv TSVECTOR
+   updated_at TIMESTAMP
 );

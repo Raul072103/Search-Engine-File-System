@@ -36,7 +36,7 @@ func NewRepo(db *sql.DB) Repo {
 // If a resource with the same path is trying to be inserted an error of type ErrConflict will be thrown.
 func (r *repo) InsertFile(ctx context.Context, file *models.File) error {
 	query := `
-		INSERT INTO files (path, name, size, is_dir, mode, extension, updated_at, content, searchable_tsv)
+		INSERT INTO files (path, name, size, mode, extension, updated_at, content)
 		VALUES ($1, $2, $3, $4, $5, $6, $7,
 		        COALESCE($8::TEXT),
 		        COALESCE(to_tsvector('english', $9), NULL))
