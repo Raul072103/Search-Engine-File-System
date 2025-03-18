@@ -66,7 +66,7 @@ func (c *crawler) Crawl(ctx context.Context, path string) {
 
 		c.eventsQueue.Push(insertEvent)
 
-		if fileModel.IsDir {
+		if fileModel.Extension == "" {
 			entries, err := os.ReadDir(path)
 			if err != nil {
 				c.logger.Error(
