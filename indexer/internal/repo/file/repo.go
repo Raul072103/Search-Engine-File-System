@@ -9,13 +9,15 @@ import (
 
 type Repo interface {
 	Read(path string) (*models.File, error)
+	Stats(path string) (*models.File, error)
 }
 
 type fileRepo struct {
+	typeMap models.FileTypesConfig
 }
 
-func NewRepo() Repo {
-	return &fileRepo{}
+func NewRepo(typeMap models.FileTypesConfig) Repo {
+	return &fileRepo{typeMap: typeMap}
 }
 
 var (
@@ -25,25 +27,26 @@ var (
 // ReadFile reads the contents of the file, if it exists, at the given path and returns the content of that file.
 // TODO() add support .docx and .pdf files as well
 func (fr *fileRepo) Read(path string) (*models.File, error) {
-	file, err := Stats(path)
+	file, err := fr.Stats(path)
 	if err != nil {
 		return file, err
 	}
 
-	if file.Extension == ".txt" {
+	if fr.typeMap.GetTypeByExtension(file.Extension) == "txt" {
 		data, err := os.ReadFile(path)
 		if err != nil {
 			return nil, err
 		}
 
-		file.Content = string(data)
+		file.Content.Text = string(data)
+		file.Content.UpdatedAt = file.UpdatedAt
 	}
 
 	return file, nil
 }
 
 // Stats if the file exists it returns an instance of models.File, else a nil.
-func Stats(path string) (*models.File, error) {
+func (fr *fileRepo) Stats(path string) (*models.File, error) {
 	fileInfo, err := os.Stat(path)
 	if os.IsNotExist(err) {
 		return nil, ErrFileNotFound
@@ -57,11 +60,20 @@ func Stats(path string) (*models.File, error) {
 		Path:      path,
 		Name:      fileInfo.Name(),
 		Size:      fileInfo.Size(),
-		IsDir:     fileInfo.IsDir(),
 		Mode:      uint32(fileInfo.Mode()),
 		Extension: getFileExtension(path, fileInfo.IsDir()),
 		UpdatedAt: fileInfo.ModTime(),
 	}
+
+	var typeId int32
+	if fileInfo.IsDir() {
+		typeId = 0
+	} else {
+		typeId = fr.typeMap.ExtensionMappings[file.Extension]
+	}
+
+	file.Type.TypeID = typeId
+	file.Type.UpdatedAt = file.UpdatedAt
 
 	return file, err
 }
