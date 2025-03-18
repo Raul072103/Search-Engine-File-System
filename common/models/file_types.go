@@ -6,11 +6,11 @@ import (
 )
 
 type FileTypesConfig struct {
-	TypesMapping      map[string]string `json:"types_mapping"`
-	ExtensionMappings map[string]string `json:"extension_mappings"`
+	TypesMapping      map[int32]string `json:"types_mapping"`
+	ExtensionMappings map[int32]string `json:"extension_mappings"`
 }
 
-func parseFileTypesConfig(filePath string) (FileTypesConfig, error) {
+func ParseFileTypesConfig(filePath string) (FileTypesConfig, error) {
 	var fileTypesConfig FileTypesConfig
 
 	// Open the JSON file
