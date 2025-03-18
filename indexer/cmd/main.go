@@ -115,12 +115,19 @@ func setup() *Application {
 	app.Config.PostgresDB = pqDB
 	app.Config.PostgresConfig = postgresConfig
 
+	fileTypesConfig, err := models.ParseFileTypesConfig("C:\\Users\\raula\\Desktop\\facultate\\anul 3 sem 2\\Software Design\\Project\\common\\file_types_config.json")
+	if err != nil {
+		panic(err)
+	}
+
+	app.Config.FileTypesConfig = fileTypesConfig
+
 	// Database Repository
-	dbRepo := database.NewRepo(pqDB)
+	dbRepo := database.NewRepo(pqDB, fileTypesConfig)
 	app.DBRepo = dbRepo
 
 	// File Repository
-	fileRepo := file.NewRepo()
+	fileRepo := file.NewRepo(fileTypesConfig)
 	app.FileRepo = fileRepo
 
 	// Events queue

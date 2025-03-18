@@ -103,7 +103,7 @@ func (p *processor) ExecuteInsertEvent(event queue.DBEvent) error {
 		return ErrExpectedInsertEvent
 	}
 
-	err := p.DBRepo.InsertFile(context.Background(), &event.File)
+	err := p.DBRepo.Files.Insert(context.Background(), &event.File)
 	return err
 }
 
@@ -113,7 +113,7 @@ func (p *processor) ExecuteUpdateEvent(event queue.DBEvent) error {
 		return ErrExpectedUpdateEvent
 	}
 
-	err := p.DBRepo.UpdateFile(context.Background(), &event.File)
+	err := p.DBRepo.Files.Update(context.Background(), &event.File)
 	return err
 }
 
@@ -123,6 +123,6 @@ func (p *processor) ExecuteDeleteEvent(event queue.DBEvent) error {
 		return ErrExpectedDeleteEvent
 	}
 
-	err := p.DBRepo.DeleteFile(context.Background(), &event.File)
+	err := p.DBRepo.Files.Delete(context.Background(), &event.File)
 	return err
 }
