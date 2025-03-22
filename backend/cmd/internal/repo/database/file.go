@@ -36,7 +36,7 @@ func (r *fileRepo) Search(ctx context.Context, searchRequest FileSearchRequest) 
 	var argIdx = 0
 	var args = make([]any, 0)
 
-	if searchRequest.Extension != nil {
+	if searchRequest.Extension != nil && len(*searchRequest.Extension) != 0 {
 		extensionQueryCondition := " AND ("
 
 		for i, extension := range *searchRequest.Extension {
@@ -61,7 +61,7 @@ func (r *fileRepo) Search(ctx context.Context, searchRequest FileSearchRequest) 
 		query += nameQueryCondition
 	}
 
-	if searchRequest.Words != nil {
+	if searchRequest.Words != nil && len(*searchRequest.Words) != 0 {
 		wordsQueryCondition := " AND (c.searchable_tsv @@ to_tsquery('english', "
 
 		for i, word := range *searchRequest.Words {
