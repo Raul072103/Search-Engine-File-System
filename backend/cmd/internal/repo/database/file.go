@@ -18,8 +18,6 @@ type fileRepo struct {
 }
 
 // Search searches for the files that match the FileSearchRequest
-// TODO() find another way since this can be used to inject SQL querie
-// TODO() find a way to regex match the names
 func (r *fileRepo) Search(ctx context.Context, searchRequest FileSearchRequest) ([]models.File, error) {
 	query := `
 		SELECT 
