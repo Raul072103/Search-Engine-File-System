@@ -5,12 +5,13 @@ import (
 	"MyFileExporer/backend/cmd/internal/repo/database"
 	"MyFileExporer/common/env"
 	"MyFileExporer/common/logger"
-	"context"
+	"expvar"
 	"fmt"
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 	"go.uber.org/zap"
 	"log"
+	"runtime"
 )
 
 const (
@@ -69,30 +70,19 @@ func main() {
 	}
 
 	// Metrics collected
-	//expvar.NewString("version").Set(version)
-	//expvar.Publish("db", expvar.Func(func() any {
-	//	return db.Stats()
-	//}))
-	//expvar.Publish("goroutines", expvar.Func(func() any {
-	//	return runtime.NumGoroutine()
-	//}))
+	expvar.NewString("version").Set(version)
+	expvar.Publish("db", expvar.Func(func() any {
+		return pgDb.Stats()
+	}))
+	expvar.Publish("goroutines", expvar.Func(func() any {
+		return runtime.NumGoroutine()
+	}))
 
-	//mux := app.mount()
-	//app.logger.Fatal("server error", zap.Error(app.run(mux)) )
+	mux := app.mount()
+	app.logger.Fatal("server error", zap.Error(app.run(mux)))
 
-	words := []string{"art"}
-	//extensions := []string{".exe", ".sh"}
-
-	searchFileRequest1 := database.FileSearchRequest{
-		Words: &words,
-	}
-
-	files, err := app.dbRepo.Files.Search(context.Background(), searchFileRequest1)
+	err = app.run(mux)
 	if err != nil {
-		app.logger.Fatal("search error", zap.Error(err))
-	}
-
-	for _, file := range files {
-		fmt.Println(file)
+		app.logger.Fatal("server error", zap.Error(err))
 	}
 }
