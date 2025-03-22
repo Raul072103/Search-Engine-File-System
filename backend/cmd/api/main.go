@@ -1,8 +1,8 @@
 package main
 
 import (
-	"MyFileExporer/backend/cmd/internal/db"
-	"MyFileExporer/backend/cmd/internal/repo/database"
+	"MyFileExporer/backend/internal/db"
+	"MyFileExporer/backend/internal/repo/database"
 	"MyFileExporer/common/env"
 	"MyFileExporer/common/logger"
 	"expvar"

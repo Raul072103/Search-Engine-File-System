@@ -27,10 +27,16 @@ func (r *fileRepo) Search(ctx context.Context, searchRequest FileSearchRequest) 
 		    f.size,
 		    f.mode, 
 		    f.extension, 
-		    f.updated_at
+		    f.updated_at,
+		    c.id,
+		    c.content_text,
+		    c.content_bytes,
+		    t.id,
+		    t.type
 		FROM files AS f
 		JOIN types AS t ON f.id = t.file_id
 		JOIN contents AS c ON c.file_id = f.id
+		WHERE 1=1
 	`
 
 	var argIdx = 0
@@ -95,7 +101,13 @@ func (r *fileRepo) Search(ctx context.Context, searchRequest FileSearchRequest) 
 			&file.Size,
 			&file.Mode,
 			&file.Extension,
-			&file.UpdatedAt)
+			&file.UpdatedAt,
+			&file.Content.ID,
+			&file.Content.Text,
+			&file.Content.Bytes,
+			&file.Type.ID,
+			&file.Type.TypeID,
+		)
 
 		if err != nil {
 			return nil, err

@@ -1,7 +1,7 @@
 package main
 
 import (
-	"MyFileExporer/backend/cmd/internal/repo/database"
+	"MyFileExporer/backend/internal/repo/database"
 	"context"
 	"net/http"
 )
