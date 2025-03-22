@@ -1,10 +1,16 @@
 package main
 
 import (
+	"MyFileExporer/backend/cmd/internal/db"
+	"MyFileExporer/backend/cmd/internal/repo/database"
 	"MyFileExporer/common/env"
 	"MyFileExporer/common/logger"
+	"context"
 	"fmt"
+	"github.com/joho/godotenv"
+	_ "github.com/lib/pq"
 	"go.uber.org/zap"
+	"log"
 )
 
 const (
@@ -12,13 +18,19 @@ const (
 )
 
 func main() {
+	// Env file setup
+	err := godotenv.Load("C:\\Users\\raula\\Desktop\\facultate\\anul 3 sem 2\\Software Design\\Project\\.env")
+	if err != nil {
+		log.Fatal("Error loading .env file", zap.Error(err))
+	}
+
 	dbAddress := fmt.Sprintf(
 		"postgres://%s:%s@%s:%s/%s?sslmode=disable",
 		env.GetString("POSTGRES_USER", "admin"),
 		env.GetString("POSTGRES_PASSWORD", "admin_password"),
 		env.GetString("POSTGRES_IP", "localhost"),
 		env.GetString("POSTGRES_PORT", "5434"),
-		env.GetString("POSTGRES_DB", "companies"),
+		env.GetString("POSTGRES_DB", "file_system_database"),
 	)
 
 	cfg := config{
@@ -36,32 +48,51 @@ func main() {
 
 	zapLogger := logger.InitLogger("backend.log")
 
+	// Database
+	pgDb, err := db.New(
+		cfg.db.addr,
+		cfg.db.maxOpenConns,
+		cfg.db.maxIdleConns,
+		cfg.db.maxIdleTime)
+	defer pgDb.Close()
+
+	if err != nil {
+		zapLogger.Fatal("db error", zap.Error(err))
+	}
+
+	dbRepo := database.NewRepo(pgDb)
+
 	app := &application{
 		config: cfg,
 		logger: zapLogger,
+		dbRepo: dbRepo,
 	}
-
-	// Database
-	//database, err := db.New(
-	//	cfg.db.addr,
-	//	cfg.db.maxOpenConns,
-	//	cfg.db.maxIdleConns,
-	//	cfg.db.maxIdleTime)
-	//defer database.Close()
-	//
-	//if err != nil {
-	//	app.logger.Fatal("database error", zap.Error(err))
-	//}
 
 	// Metrics collected
 	//expvar.NewString("version").Set(version)
-	//expvar.Publish("database", expvar.Func(func() any {
-	//	return database.Stats()
+	//expvar.Publish("db", expvar.Func(func() any {
+	//	return db.Stats()
 	//}))
 	//expvar.Publish("goroutines", expvar.Func(func() any {
 	//	return runtime.NumGoroutine()
 	//}))
 
-	mux := app.mount()
-	app.logger.Fatal("server error", zap.Error(app.run(mux)))
+	//mux := app.mount()
+	//app.logger.Fatal("server error", zap.Error(app.run(mux)) )
+
+	words := []string{"art"}
+	//extensions := []string{".exe", ".sh"}
+
+	searchFileRequest1 := database.FileSearchRequest{
+		Words: &words,
+	}
+
+	files, err := app.dbRepo.Files.Search(context.Background(), searchFileRequest1)
+	if err != nil {
+		app.logger.Fatal("search error", zap.Error(err))
+	}
+
+	for _, file := range files {
+		fmt.Println(file)
+	}
 }

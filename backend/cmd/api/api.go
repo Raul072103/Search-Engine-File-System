@@ -1,6 +1,7 @@
 package main
 
 import (
+	"MyFileExporer/backend/cmd/internal/repo/database"
 	"context"
 	"errors"
 	"github.com/go-chi/chi/v5"
@@ -17,6 +18,7 @@ import (
 type application struct {
 	config config
 	logger *zap.Logger
+	dbRepo database.Repo
 }
 
 type config struct {

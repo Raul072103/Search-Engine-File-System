@@ -94,7 +94,7 @@ func setup() *Application {
 		env.GetString("POSTGRES_PASSWORD", "admin_password"),
 		env.GetString("POSTGRES_IP", "localhost"),
 		env.GetString("POSTGRES_PORT", "5434"),
-		env.GetString("POSTGRES_DB", "companies"),
+		env.GetString("POSTGRES_DB", "file_system_database"),
 	)
 
 	postgresConfig := db.Config{
