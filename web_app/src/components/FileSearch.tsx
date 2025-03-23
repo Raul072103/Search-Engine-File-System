@@ -1,16 +1,26 @@
 import React, { useState, useEffect } from "react";
 
+const RESULTS_PER_PAGE = 20; // Number of results per page
+
 const FileSearch: React.FC = () => {
     const [searchParams, setSearchParams] = useState({
         word_list: "",
         file_name: "",
         extensions: "",
     });
+
     const [results, setResults] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [currentPage, setCurrentPage] = useState(1);
 
     useEffect(() => {
+        // Don't fetch if all inputs are empty
+        if (!searchParams.word_list && !searchParams.file_name && !searchParams.extensions) {
+            setResults([]);  // Clear results if inputs are empty
+            return;
+        }
+
         const fetchResults = async () => {
             setLoading(true);
             setError(null);
@@ -35,6 +45,7 @@ const FileSearch: React.FC = () => {
                 const data = await response.json();
                 console.log("API Response:", data); // Check the structure of the response
                 setResults(data.data || []);
+                setCurrentPage(1); // Reset to the first page on new search
             } catch (error) {
                 setError("Error fetching search results.");
                 console.error("Error fetching search results:", error);
@@ -51,8 +62,14 @@ const FileSearch: React.FC = () => {
         setSearchParams((prev) => ({ ...prev, [name]: value }));
     };
 
+    // Pagination Logic
+    const totalPages = Math.ceil(results.length / RESULTS_PER_PAGE);
+    const startIndex = (currentPage - 1) * RESULTS_PER_PAGE;
+    const displayedResults = results.slice(startIndex, startIndex + RESULTS_PER_PAGE);
+
     return (
         <div className="min-h-screen p-4 flex flex-col items-center bg-gray-100">
+            {/* Input Fields */}
             <div className="w-full max-w-lg p-4 bg-white rounded-2xl shadow-lg space-y-4 mb-4">
                 <input
                     type="text"
@@ -80,18 +97,47 @@ const FileSearch: React.FC = () => {
                 />
             </div>
 
-            {/* Results Section */}
-            <div className="w-full max-w-lg mt-4 overflow-y-auto max-h-96">
+            {/* Display Results */}
+            <div className="w-full max-w-lg bg-white rounded-2xl shadow-lg p-4">
                 {loading ? (
-                    <p className="text-gray-500 text-center">Loading...</p>
+                    <p className="text-center text-blue-500">Loading...</p>
                 ) : error ? (
-                    <p className="text-red-500 text-center">{error}</p>
+                    <p className="text-center text-red-500">{error}</p>
                 ) : results.length > 0 ? (
-                    <ul className="bg-white rounded-2xl shadow-lg p-4 divide-y divide-gray-200">
-                        {results.map((result, index) => (
-                            <li key={index} className="p-2">{result}</li>
-                        ))}
-                    </ul>
+                    <>
+                        <ul className="divide-y divide-gray-200 max-h-80 overflow-y-auto">
+                            {displayedResults.map((result, index) => (
+                                <li key={index} className="p-2 text-sm">
+                                    <div><strong>Name:</strong> {result.Name}</div>
+                                    <div><strong>Path:</strong> {result.Path}</div>
+                                    <div><strong>Size:</strong> {result.Size} bytes</div>
+                                    <div><strong>Extension:</strong> {result.Extension}</div>
+                                    <div><strong>Updated At:</strong> {new Date(result.UpdatedAt).toLocaleString()}
+                                    <div><strong>File Preview</strong> {result.Content.Text}</div>
+                                    </div>
+                                </li>
+                            ))}
+                        </ul>
+
+                        {/* Pagination Controls */}
+                        <div className="flex justify-center mt-4 space-x-2">
+                            <button
+                                onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                                disabled={currentPage === 1}
+                                className="px-3 py-1 border rounded disabled:opacity-50"
+                            >
+                                Previous
+                            </button>
+                            <span className="px-3 py-1">{currentPage} / {totalPages}</span>
+                            <button
+                                onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+                                disabled={currentPage === totalPages}
+                                className="px-3 py-1 border rounded disabled:opacity-50"
+                            >
+                                Next
+                            </button>
+                        </div>
+                    </>
                 ) : (
                     <p className="text-gray-500 text-center">No results found</p>
                 )}
