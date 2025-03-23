@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 
-const RESULTS_PER_PAGE = 20; // Number of results per page
+const RESULTS_PER_PAGE = 3; // Number of results per page
 
 const FileSearch: React.FC = () => {
     const [searchParams, setSearchParams] = useState({
@@ -31,7 +31,9 @@ const FileSearch: React.FC = () => {
                     searchParams.word_list.split(/\s+/).forEach(word => query.append("word_list", word));
                 }
                 if (searchParams.file_name) query.append("file_name", searchParams.file_name);
-                if (searchParams.extensions) query.append("extensions", searchParams.extensions);
+                if (searchParams.extensions) {
+                    searchParams.extensions.split(/\s+/).forEach(word => query.append("extensions", word));
+                }
 
                 const response = await fetch(`http://localhost:8080/v1/search?${query.toString()}`, {
                     method: "GET",
@@ -105,20 +107,6 @@ const FileSearch: React.FC = () => {
                     <p className="text-center text-red-500">{error}</p>
                 ) : results.length > 0 ? (
                     <>
-                        <ul className="divide-y divide-gray-200 max-h-80 overflow-y-auto">
-                            {displayedResults.map((result, index) => (
-                                <li key={index} className="p-2 text-sm">
-                                    <div><strong>Name:</strong> {result.Name}</div>
-                                    <div><strong>Path:</strong> {result.Path}</div>
-                                    <div><strong>Size:</strong> {result.Size} bytes</div>
-                                    <div><strong>Extension:</strong> {result.Extension}</div>
-                                    <div><strong>Updated At:</strong> {new Date(result.UpdatedAt).toLocaleString()}
-                                    <div><strong>File Preview</strong> {result.Content.Text}</div>
-                                    </div>
-                                </li>
-                            ))}
-                        </ul>
-
                         {/* Pagination Controls */}
                         <div className="flex justify-center mt-4 space-x-2">
                             <button
@@ -137,6 +125,19 @@ const FileSearch: React.FC = () => {
                                 Next
                             </button>
                         </div>
+                        <ul className="divide-y divide-gray-200 max-h-80 overflow-y-auto">
+                            {displayedResults.map((result, index) => (
+                                <li key={index} className="p-2 text-sm">
+                                    <div><strong>Name:</strong> {result.Name}</div>
+                                    <div><strong>Path:</strong> {result.Path}</div>
+                                    <div><strong>Size:</strong> {result.Size} bytes</div>
+                                    <div><strong>Extension:</strong> {result.Extension}</div>
+                                    <div><strong>Updated At:</strong> {new Date(result.UpdatedAt).toLocaleString()}
+                                    <div><strong>File Preview</strong> {result.Content.Text}</div>
+                                    </div>
+                                </li>
+                            ))}
+                        </ul>
                     </>
                 ) : (
                     <p className="text-gray-500 text-center">No results found</p>

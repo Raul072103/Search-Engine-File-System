@@ -62,7 +62,7 @@ func (r *fileRepo) Search(ctx context.Context, searchRequest FileSearchRequest) 
 
 	if searchRequest.Name != nil {
 		argIdx += 1
-		args = append(args, searchRequest.Name)
+		args = append(args, *searchRequest.Name)
 		nameQueryCondition := fmt.Sprintf(" AND f.name LIKE $%d || '%%'\n", argIdx)
 		query += nameQueryCondition
 	}
