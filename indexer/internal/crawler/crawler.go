@@ -4,6 +4,8 @@ import (
 	"MyFileExporer/indexer/internal/queue"
 	"MyFileExporer/indexer/internal/repo/file"
 	"context"
+	"encoding/json"
+	"fmt"
 	"go.uber.org/zap"
 	"os"
 	"path/filepath"
@@ -24,8 +26,10 @@ type crawler struct {
 }
 
 type Config struct {
-	IgnorePatterns []string `json:"ignore_patterns"`
-	RootDir        string   `json:"root_dir"`
+	IgnorePatterns   []string `json:"ignore_patterns"`
+	LastTraversedDir string   `json:"last_traversed_dir"`
+	RootDir          string   `json:"root_dir"`
+	CrawlerDone      bool     `json:"crawler_done"`
 }
 
 func New(fileRepo file.Repo, eventsQueue *queue.InMemoryQueue, logger *zap.Logger, config Config) Crawler {
@@ -38,9 +42,26 @@ func New(fileRepo file.Repo, eventsQueue *queue.InMemoryQueue, logger *zap.Logge
 }
 
 func (c *crawler) Run(ctx context.Context) {
-	c.logger.Info("Starting crawler", zap.String("root", c.config.RootDir))
-	c.Crawl(ctx, c.config.RootDir)
-	c.logger.Info("Crawler finished")
+	if !c.config.CrawlerDone {
+		var startDir string
+		if c.config.LastTraversedDir == "" {
+			startDir = c.config.RootDir
+		} else {
+			startDir = c.config.LastTraversedDir
+		}
+
+		c.logger.Info("Starting crawler", zap.String("dir", startDir))
+		c.Crawl(ctx, startDir)
+		c.config.CrawlerDone = true
+
+		err := c.saveCrawlerProgress()
+		if err != nil {
+			c.logger.Error("failed to update crawler status to done", zap.Error(err))
+			return
+		}
+
+		c.logger.Info("Crawler finished")
+	}
 }
 
 func (c *crawler) Crawl(ctx context.Context, startPath string) {
@@ -97,6 +118,13 @@ func (c *crawler) Crawl(ctx context.Context, startPath string) {
 					entryPath := filepath.Join(path, entry.Name())
 					explorePaths = append(explorePaths, entryPath)
 				}
+
+				// Save as last traversed directory
+				c.config.LastTraversedDir = path
+				err = c.saveCrawlerProgress()
+				if err != nil {
+					c.logger.Error("error saving crawler progress to JSON file", zap.Error(err))
+				}
 			}
 		}
 	}
@@ -115,4 +143,22 @@ func (c *crawler) matchesPattern(filePath string) bool {
 		}
 	}
 	return false
+}
+
+func (c *crawler) saveCrawlerProgress() error {
+	crawlerConfigFile, err := os.OpenFile("./config.json", os.O_RDWR|os.O_TRUNC, 0666)
+	if err != nil {
+		return fmt.Errorf("error opening crawlerConfigFile: %w", err)
+	}
+	defer crawlerConfigFile.Close()
+
+	encoder := json.NewEncoder(crawlerConfigFile)
+	encoder.SetIndent("", "  ")
+
+	err = encoder.Encode(c.config)
+	if err != nil {
+		return fmt.Errorf("error encoding crawler config to crawlerConfigFile: %w", err)
+	}
+
+	return nil
 }

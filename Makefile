@@ -15,4 +15,4 @@ migrate-down:
 
 .PHONY: test-make-setup
 test-make-setup:
-	@echo ${POSTGRES_DB_PATH}
+	@echo ${POSTGRES_MIGRATIONS_PATH}
