@@ -67,8 +67,8 @@ func (p *processor) Run(ctx context.Context) error {
 
 				err = p.HandleEvent(dbEvent)
 				if err != nil {
-					p.logger.Error("Couldn't handle db event", zap.Error(err))
-					return err
+					// if it is an error, log it
+					p.logger.Error("Couldn't handle db event", zap.String("path", dbEvent.File.Path), zap.Error(err))
 				}
 			}
 		}

@@ -43,44 +43,60 @@ func (c *crawler) Run(ctx context.Context) {
 	c.logger.Info("Crawler finished")
 }
 
-func (c *crawler) Crawl(ctx context.Context, path string) {
-	select {
-	case <-ctx.Done():
-		c.logger.Info("Crawler stopped before going further", zap.String("path", path))
-		return
-	default:
-		if c.matchesPattern(path) {
+func (c *crawler) Crawl(ctx context.Context, startPath string) {
+	var explorePaths = make([]string, 0)
+	explorePaths = append(explorePaths, startPath)
+
+	for {
+		explorePathsLength := len(explorePaths)
+		if explorePathsLength == 0 {
+			c.logger.Info("Crawler finished traversing process")
 			return
 		}
 
-		fileModel, err := c.fileRepo.Read(path)
-		if err != nil {
-			c.logger.Info("Error reading file or dir", zap.String("path", path), zap.Error(err))
+		path := explorePaths[explorePathsLength-1]
+		explorePaths = explorePaths[:explorePathsLength-1]
+
+		select {
+		case <-ctx.Done():
+			c.logger.Info("Crawler stopped before going further", zap.String("path", path))
 			return
-		}
-
-		insertEvent := queue.DBEvent{
-			Type: queue.InsertEvent,
-			File: *fileModel,
-		}
-
-		c.eventsQueue.Push(insertEvent)
-
-		if fileModel.Extension == "" {
-			entries, err := os.ReadDir(path)
-			if err != nil {
-				c.logger.Error(
-					"Error reading directory for further traversing",
-					zap.String("path", path),
-					zap.Error(err))
-
+		default:
+			if c.matchesPattern(path) {
 				return
 			}
 
-			// Recur for each entry
-			for _, entry := range entries {
-				entryPath := filepath.Join(path, entry.Name())
-				c.Crawl(ctx, entryPath)
+			fileModel, err := c.fileRepo.Read(path)
+			if err != nil {
+				c.logger.Info("Error reading file or dir", zap.String("path", path), zap.Error(err))
+				explorePaths = explorePaths[:explorePathsLength-1]
+				continue
+			}
+
+			insertEvent := queue.DBEvent{
+				Type: queue.InsertEvent,
+				File: *fileModel,
+			}
+
+			c.eventsQueue.Push(insertEvent)
+
+			if fileModel.Extension == "" {
+				entries, err := os.ReadDir(path)
+				if err != nil {
+					c.logger.Error(
+						"Error reading directory for further traversing",
+						zap.String("path", path),
+						zap.Error(err))
+
+					explorePaths = explorePaths[:explorePathsLength-1]
+					continue
+				}
+
+				// Recur for each entry
+				for _, entry := range entries {
+					entryPath := filepath.Join(path, entry.Name())
+					explorePaths = append(explorePaths, entryPath)
+				}
 			}
 		}
 	}
