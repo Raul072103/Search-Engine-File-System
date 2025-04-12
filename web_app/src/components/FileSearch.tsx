@@ -108,9 +108,9 @@ const FileSearch: React.FC = () => {
             {/* Display Results */}
             <div>
                 {loading ? (
-                    <p className="text-center text-blue-500">Loading...</p>
+                    <p>Loading...</p>
                 ) : error ? (
-                    <p className="text-center text-red-500">{error}</p>
+                    <p>{error}</p>
                 ) : results.length > 0 ? (
                     <>
                         {/* Pagination Controls */}
@@ -121,7 +121,7 @@ const FileSearch: React.FC = () => {
                             >
                                 Previous
                             </button>
-                            <span className="px-3 py-1">{currentPage} / {totalPages}</span>
+                            <span>{currentPage} / {totalPages}</span>
                             <button
                                 onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
                                 disabled={currentPage === totalPages}
