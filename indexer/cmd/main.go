@@ -85,6 +85,9 @@ func setup() *Application {
 	var app Application
 	app.Config = ApplicationConfig{}
 
+	processorLogger := logger.InitLogger("./processor.log")
+	crawlerLogger := logger.InitLogger("./crawler.log")
+
 	app.Logger = logger.InitLogger("./indexer.log")
 
 	// Database Config
@@ -135,12 +138,12 @@ func setup() *Application {
 	app.EventsQueue = eventsQueue
 
 	// Batch Processor
-	processor := batch.NewProcessor(app.DBRepo, eventsQueue, app.Logger)
+	processor := batch.NewProcessor(app.DBRepo, eventsQueue, processorLogger)
 	app.Processor = processor
 
 	// File Crawler
 	crawlerConfig := app.loadCrawlerConfig("./config.json")
-	fileCrawler := crawler.New(app.FileRepo, eventsQueue, app.Logger, crawlerConfig)
+	fileCrawler := crawler.New(app.FileRepo, eventsQueue, crawlerLogger, crawlerConfig)
 	app.Crawler = fileCrawler
 
 	return &app
