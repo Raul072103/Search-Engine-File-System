@@ -29,11 +29,16 @@ const FileSearch: React.FC = () => {
             try {
                 const query = new URLSearchParams();
                 if (searchParams.word_list) {
-                    searchParams.word_list.split(/\s+/).forEach(word => query.append("word_list", word));
+                    searchParams.word_list.split(/\s+/)
+                        .filter(word => word != "")
+                        .forEach(word => query.append("word_list", word));
                 }
                 if (searchParams.file_name) query.append("file_name", searchParams.file_name);
+
                 if (searchParams.extensions) {
-                    searchParams.extensions.split(/\s+/).forEach(word => query.append("extensions", word));
+                    searchParams.extensions.split(/\s+/)
+                        .filter(word => word != "")
+                        .forEach(word => query.append("extensions", word));
                 }
 
                 const response = await fetch(`http://localhost:8080/v1/search?${query.toString()}`, {
@@ -60,10 +65,50 @@ const FileSearch: React.FC = () => {
         fetchResults();
     }, [searchParams]);
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const { name, value } = e.target;
-        setSearchParams((prev) => ({ ...prev, [name]: value }));
-    };
+    useEffect(() => {
+        const parseSearchQuery = () => {
+            const params =  {
+                word_list: "",
+                file_name: "",
+                extensions: "" };
+
+            const parts = searchQuery.split(/\s+/);
+
+            parts.forEach(part => {
+                const [key, ...values] = part.split(':');
+                const  currParams= values.join("").trim()
+
+                if (currParams !== "") {
+                    switch (key?.trim().toLowerCase()) {
+                        case "path":
+                            // TODO() add file path search
+                            break;
+                        case "content":
+                            const words = currParams.split(',').join(" ")
+                            params.word_list = `${params.word_list} ${words}`;
+                            break;
+                        case "extensions":
+                            const extensions = currParams.split(',').join(" ")
+                            params.extensions = `${params.extensions} ${extensions}`;
+                            break;
+                        case "name":
+                            params.file_name = currParams;
+                            break;
+                        default:
+                            break;
+                    }
+                }
+            });
+            setSearchParams(params);
+        };
+
+        if (searchQuery.trim() != "") {
+            parseSearchQuery();
+        } else {
+            setSearchParams({ word_list: "", file_name: "", extensions: "" });
+        }
+
+    }, [searchQuery]);
 
     // Pagination Logic
     const totalPages = Math.ceil(results.length / RESULTS_PER_PAGE);
@@ -80,8 +125,10 @@ const FileSearch: React.FC = () => {
                     placeholder="Enter search query"
                     className="search-bar"
                     value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                />
+                    onChange={(e) => {
+                        setSearchQuery(e.target.value)
+                        console.log("searchQuery updated:", e.target.value); // Add this line
+                    }}/>
             </div>
              {/* Input Fields */}
             <div>
@@ -90,21 +137,18 @@ const FileSearch: React.FC = () => {
                     name="word_list"
                     placeholder="Word List"
                     value={searchParams.word_list}
-                    onChange={handleChange}
                 />
                 <input
                     type="text"
                     name="file_name"
                     placeholder="File Name"
                     value={searchParams.file_name}
-                    onChange={handleChange}
                 />
                 <input
                     type="text"
                     name="extensions"
                     placeholder="Extensions (comma-separated)"
                     value={searchParams.extensions}
-                    onChange={handleChange}
                 />
             </div>
 
