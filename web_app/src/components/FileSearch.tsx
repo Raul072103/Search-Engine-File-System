@@ -8,6 +8,7 @@ const FileSearch: React.FC = () => {
         file_name: "",
         extensions: "",
     });
+    ///const [searchQuery, setSearchQuery] = useState<string | null>("");
 
     const [results, setResults] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
@@ -70,16 +71,23 @@ const FileSearch: React.FC = () => {
     const displayedResults = results.slice(startIndex, startIndex + RESULTS_PER_PAGE);
 
     return (
-        <div className="min-h-screen p-4 flex flex-col items-center bg-gray-100">
+        <div>
+            {/* Parser Input */ }
+            <div>
+                <input
+                    type="text"
+                    name="search_bar"
+                    placeholder="Enter search query"
+                />
+            </div>
             {/* Input Fields */}
-            <div className="w-full max-w-lg p-4 bg-white rounded-2xl shadow-lg space-y-4 mb-4">
+            <div>
                 <input
                     type="text"
                     name="word_list"
                     placeholder="Word List"
                     value={searchParams.word_list}
                     onChange={handleChange}
-                    className="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
                 <input
                     type="text"
@@ -87,7 +95,6 @@ const FileSearch: React.FC = () => {
                     placeholder="File Name"
                     value={searchParams.file_name}
                     onChange={handleChange}
-                    className="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
                 <input
                     type="text"
@@ -95,12 +102,11 @@ const FileSearch: React.FC = () => {
                     placeholder="Extensions (comma-separated)"
                     value={searchParams.extensions}
                     onChange={handleChange}
-                    className="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
             </div>
 
             {/* Display Results */}
-            <div className="w-full max-w-lg bg-white rounded-2xl shadow-lg p-4">
+            <div>
                 {loading ? (
                     <p className="text-center text-blue-500">Loading...</p>
                 ) : error ? (
@@ -108,11 +114,10 @@ const FileSearch: React.FC = () => {
                 ) : results.length > 0 ? (
                     <>
                         {/* Pagination Controls */}
-                        <div className="flex justify-center mt-4 space-x-2">
+                        <div>
                             <button
                                 onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
                                 disabled={currentPage === 1}
-                                className="px-3 py-1 border rounded disabled:opacity-50"
                             >
                                 Previous
                             </button>
@@ -120,14 +125,13 @@ const FileSearch: React.FC = () => {
                             <button
                                 onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
                                 disabled={currentPage === totalPages}
-                                className="px-3 py-1 border rounded disabled:opacity-50"
                             >
                                 Next
                             </button>
                         </div>
-                        <ul className="divide-y divide-gray-200 max-h-80 overflow-y-auto">
+                        <ul>
                             {displayedResults.map((result, index) => (
-                                <li key={index} className="p-2 text-sm">
+                                <li key={index}>
                                     <div><strong>Name:</strong> {result.Name}</div>
                                     <div><strong>Path:</strong> {result.Path}</div>
                                     <div><strong>Size:</strong> {result.Size} bytes</div>
@@ -140,7 +144,7 @@ const FileSearch: React.FC = () => {
                         </ul>
                     </>
                 ) : (
-                    <p className="text-gray-500 text-center">No results found</p>
+                    <p>No results found</p>
                 )}
             </div>
         </div>
