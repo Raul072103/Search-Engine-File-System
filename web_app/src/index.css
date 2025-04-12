@@ -13,6 +13,13 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
+.css-test-element {
+  color: blue;
+  font-weight: bold;
+  padding: 15px;
+  border: 1px solid black;
+}
+
 @media (prefers-color-scheme: light) {
   :root {
     height: 100%;

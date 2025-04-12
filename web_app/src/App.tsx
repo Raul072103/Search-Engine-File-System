@@ -3,7 +3,7 @@ import FileSearch from './components/FileSearch';
 
 const App: React.FC = () => (
     <div>
-        <div className="user-input">
+        <div>
             <h1>File Search</h1>
             <FileSearch/>
         </div>

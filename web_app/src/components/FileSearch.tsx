@@ -8,8 +8,8 @@ const FileSearch: React.FC = () => {
         file_name: "",
         extensions: "",
     });
-    ///const [searchQuery, setSearchQuery] = useState<string | null>("");
 
+    const [searchQuery, setSearchQuery] = useState("");
     const [results, setResults] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -72,15 +72,18 @@ const FileSearch: React.FC = () => {
 
     return (
         <div>
-            {/* Parser Input */ }
+            {/* Parser Input */}
             <div>
                 <input
                     type="text"
                     name="search_bar"
                     placeholder="Enter search query"
+                    className="search-bar"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
                 />
             </div>
-            {/* Input Fields */}
+             {/* Input Fields */}
             <div>
                 <input
                     type="text"
@@ -137,7 +140,7 @@ const FileSearch: React.FC = () => {
                                     <div><strong>Size:</strong> {result.Size} bytes</div>
                                     <div><strong>Extension:</strong> {result.Extension}</div>
                                     <div><strong>Updated At:</strong> {new Date(result.UpdatedAt).toLocaleString()}
-                                    <div><strong>File Preview</strong> {result.Content.Text}</div>
+                                        <div><strong>File Preview</strong> {result.Content.Text}</div>
                                     </div>
                                 </li>
                             ))}
