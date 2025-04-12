@@ -115,7 +115,7 @@ func setup() *Application {
 	app.Config.PostgresDB = pqDB
 	app.Config.PostgresConfig = postgresConfig
 
-	fileTypesConfig, err := models.ParseFileTypesConfig("C:\\Users\\raula\\Desktop\\facultate\\anul 3 sem 2\\Software Design\\Project\\common\\file_types_config.json")
+	fileTypesConfig, err := models.ParseFileTypesConfig("./../common/file_types_config.json")
 	if err != nil {
 		panic(err)
 	}
@@ -139,7 +139,7 @@ func setup() *Application {
 	app.Processor = processor
 
 	// File Crawler
-	crawlerConfig := app.loadCrawlerConfig("C:\\Users\\raula\\Desktop\\facultate\\anul 3 sem 2\\Software Design\\Project\\indexer\\config.json")
+	crawlerConfig := app.loadCrawlerConfig("./config.json")
 	fileCrawler := crawler.New(app.FileRepo, eventsQueue, app.Logger, crawlerConfig)
 	app.Crawler = fileCrawler
 

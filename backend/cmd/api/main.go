@@ -20,7 +20,7 @@ const (
 
 func main() {
 	// Env file setup
-	err := godotenv.Load("C:\\Users\\raula\\Desktop\\facultate\\anul 3 sem 2\\Software Design\\Project\\.env")
+	err := godotenv.Load("./../.env")
 	if err != nil {
 		log.Fatal("Error loading .env file", zap.Error(err))
 	}
