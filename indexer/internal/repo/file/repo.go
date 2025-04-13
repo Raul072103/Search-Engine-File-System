@@ -61,9 +61,6 @@ func (fr *fileRepo) Read(path string) (*models.File, error) {
 		}
 	}
 
-	// TODO() calculate ranking based on a formula
-	file.Rank = 0.0
-
 	fileID, err := utils.GetFileID(path)
 	if err != nil {
 		return nil, err
