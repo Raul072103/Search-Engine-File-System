@@ -52,7 +52,6 @@ func (c *crawler) Run(ctx context.Context) {
 
 		c.logger.Info("Starting crawler", zap.String("dir", startDir))
 		c.Crawl(ctx, startDir)
-		c.config.CrawlerDone = true
 
 		err := c.saveCrawlerProgress()
 		if err != nil {
@@ -66,13 +65,15 @@ func (c *crawler) Run(ctx context.Context) {
 
 func (c *crawler) Crawl(ctx context.Context, startPath string) {
 	var explorePaths = make([]string, 0)
+	var parentID int64 = 0
+
 	explorePaths = append(explorePaths, startPath)
 
 	for {
 		explorePathsLength := len(explorePaths)
 		if explorePathsLength == 0 {
 			c.logger.Info("Crawler finished traversing process")
-			return
+			break
 		}
 
 		path := explorePaths[explorePathsLength-1]
@@ -94,6 +95,8 @@ func (c *crawler) Crawl(ctx context.Context, startPath string) {
 				continue
 			}
 
+			fileModel.ParentFileID = parentID
+
 			insertEvent := queue.DBEvent{
 				Type: queue.InsertEvent,
 				File: *fileModel,
@@ -102,6 +105,9 @@ func (c *crawler) Crawl(ctx context.Context, startPath string) {
 			c.eventsQueue.Push(insertEvent)
 
 			if fileModel.Extension == "" {
+				// Save the fileID as the next parentID
+				parentID = fileModel.WindowsFileID
+
 				entries, err := os.ReadDir(path)
 				if err != nil {
 					c.logger.Error(
@@ -128,6 +134,8 @@ func (c *crawler) Crawl(ctx context.Context, startPath string) {
 			}
 		}
 	}
+
+	c.config.CrawlerDone = true
 }
 
 func (c *crawler) matchesPattern(filePath string) bool {

@@ -6,15 +6,19 @@ import (
 )
 
 type File struct {
-	ID        int64
-	Path      string
-	Name      string
-	Size      int64
-	Type      FileType
-	Mode      uint32
-	Extension string
-	Content   FileContent
-	UpdatedAt time.Time
+	ID            int64
+	Path          string
+	Name          string
+	Size          int64
+	Type          FileType
+	Mode          uint32
+	Extension     string
+	WindowsFileID int64
+	ParentFileID  int64
+	Rank          float64
+	Hash          string
+	Content       FileContent
+	UpdatedAt     time.Time
 }
 
 // String returns the File struct in a printable format.

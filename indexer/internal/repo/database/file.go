@@ -24,8 +24,8 @@ type fileRepo struct {
 func (r *fileRepo) Insert(ctx context.Context, file *models.File) error {
 	return withTransaction(r.db, ctx, func(tx *sql.Tx) error {
 		query := `
-		INSERT INTO files (path, name, size, mode, extension, updated_at)
-		VALUES ($1, $2, $3, $4, $5, $6) RETURNING id
+		INSERT INTO files (path, name, size, mode, extension, file_id, parent_id, rank, hash, updated_at)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id
 	`
 
 		ctx, cancel := context.WithTimeout(ctx, InsertFileTimeoutDuration)
@@ -39,6 +39,10 @@ func (r *fileRepo) Insert(ctx context.Context, file *models.File) error {
 			file.Size,
 			file.Mode,
 			file.Extension,
+			file.WindowsFileID,
+			file.ParentFileID,
+			file.Rank,
+			file.Hash,
 			file.UpdatedAt,
 		).Scan(&file.ID)
 

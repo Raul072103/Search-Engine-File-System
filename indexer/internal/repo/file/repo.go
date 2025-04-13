@@ -2,7 +2,9 @@ package file
 
 import (
 	"MyFileExporer/common/models"
+	"MyFileExporer/common/utils"
 	"errors"
+	"math"
 	"os"
 	"path/filepath"
 )
@@ -21,7 +23,8 @@ func NewRepo(typeMap models.FileTypesConfig) Repo {
 }
 
 var (
-	ErrFileNotFound = errors.New("the given path doesn't exist")
+	ErrFileNotFound   = errors.New("the given path doesn't exist")
+	ErrFileIDOverflow = errors.New("file ID to big to store in database")
 )
 
 // ReadFile reads the contents of the file, if it exists, at the given path and returns the content of that file.
@@ -41,6 +44,33 @@ func (fr *fileRepo) Read(path string) (*models.File, error) {
 		file.Content.Text = string(data)
 		file.Content.UpdatedAt = file.UpdatedAt
 	}
+
+	// Calculate Hash
+	if file.Extension != "" {
+		file.Hash, err = utils.CalculateFileMD5(path)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		file.Hash, err = utils.CalculateDirectoryMD5(path)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	// TODO() calculate ranking based on a formula
+	file.Rank = 0.0
+
+	fileID, err := utils.GetFileID(path)
+	if err != nil {
+		return nil, err
+	}
+
+	if *fileID > math.MaxInt64 {
+		return nil, ErrFileIDOverflow
+	}
+
+	file.WindowsFileID = int64(*fileID)
 
 	return file, nil
 }
