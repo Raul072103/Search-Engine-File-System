@@ -74,62 +74,9 @@ func main() {
 	// Main goroutine waits until the crawler is finish for it to finish
 	<-crawlerChan
 
+	// Run Comparator to check for differences
 	go func() {
-		err = app.USN.Executor.ExecuteReadUSNJournal()
-		if err != nil {
-			app.Logger.Error("error reading usn journal", zap.Error(err))
-		}
-
-		//err = app.USN.Executor.ExecuteQueryUSNJournal()
-		//if err != nil {
-		//	app.Logger.Error("error querying usn journal", zap.Error(err))
-		//}
-
-		records, err := app.USN.Parser.ReadLogs("./usn_logs.log")
-		if err != nil {
-			app.Logger.Error("error querying usn journal", zap.Error(err))
-			return
-		}
-
-		parentIDs, err := app.DBRepo.Files.GetAllDirectoriesFileIDs(context.Background())
-		if err != nil {
-			app.Logger.Error("error getting parent IDs", zap.Error(err))
-			return
-		}
-
-		parentMap := make(map[int64]any)
-		for _, parentID := range parentIDs {
-			parentMap[parentID] = struct{}{}
-		}
-
-		differentDirectories, err := app.USN.DifferenceFinder.FindUpdatedDirectories(records, parentMap)
-		if err != nil {
-			app.Logger.Error("error finding different directories", zap.Error(err))
-			return
-		}
-
-		fmt.Println("different directories", differentDirectories)
-
-		for _, directoryID := range differentDirectories {
-			directory, err := app.DBRepo.Files.GetFileByWindowsFileID(context.Background(), directoryID)
-			if err != nil {
-				app.Logger.Error("error retrieving directory fy file ID", zap.Error(err))
-				return
-			}
-
-			directoryFiles, err := app.DBRepo.Files.GetAllFilesWithParent(context.Background(), directoryID)
-			if err != nil {
-				app.Logger.Error("error retrieving directory children", zap.Error(err))
-				return
-			}
-
-			err = app.Comparator.Run(directory, directoryFiles)
-			if err != nil {
-				app.Logger.Error("error running comparator", zap.Error(err))
-				return
-			}
-
-		}
+		app.runComparator()
 	}()
 
 	time.Sleep(time.Second * 20)
@@ -242,4 +189,61 @@ func (app *Application) loadCrawlerConfig(filePath string) crawler.Config {
 	}
 
 	return config
+}
+
+func (app *Application) runComparator() {
+	err := app.USN.Executor.ExecuteReadUSNJournal()
+	if err != nil {
+		app.Logger.Error("error reading usn journal", zap.Error(err))
+	}
+
+	err = app.USN.Executor.ExecuteQueryUSNJournal()
+	if err != nil {
+		app.Logger.Error("error querying usn journal", zap.Error(err))
+	}
+
+	records, err := app.USN.Parser.ReadLogs("./usn_logs.log")
+	if err != nil {
+		app.Logger.Error("error querying usn journal", zap.Error(err))
+		return
+	}
+
+	parentIDs, err := app.DBRepo.Files.GetAllDirectoriesFileIDs(context.Background())
+	if err != nil {
+		app.Logger.Error("error getting parent IDs", zap.Error(err))
+		return
+	}
+
+	parentMap := make(map[int64]any)
+	for _, parentID := range parentIDs {
+		parentMap[parentID] = struct{}{}
+	}
+
+	differentDirectories, err := app.USN.DifferenceFinder.FindUpdatedDirectories(records, parentMap)
+	if err != nil {
+		app.Logger.Error("error finding different directories", zap.Error(err))
+		return
+	}
+
+	app.Logger.Info("different directories", zap.Int64s("diff_directories", differentDirectories))
+
+	for _, directoryID := range differentDirectories {
+		directory, err := app.DBRepo.Files.GetFileByWindowsFileID(context.Background(), directoryID)
+		if err != nil {
+			app.Logger.Error("error retrieving directory fy file ID", zap.Error(err))
+			return
+		}
+
+		directoryFiles, err := app.DBRepo.Files.GetAllFilesWithParent(context.Background(), directoryID)
+		if err != nil {
+			app.Logger.Error("error retrieving directory children", zap.Error(err))
+			return
+		}
+
+		err = app.Comparator.Run(directory, directoryFiles)
+		if err != nil {
+			app.Logger.Error("error running comparator", zap.Error(err))
+			return
+		}
+	}
 }
