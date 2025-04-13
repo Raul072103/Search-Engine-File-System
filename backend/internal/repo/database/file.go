@@ -84,6 +84,8 @@ func (r *fileRepo) Search(ctx context.Context, searchRequest FileSearchRequest) 
 		query += wordsQueryCondition
 	}
 
+	query += ` ORDER BY rank DESC`
+
 	rows, err := r.db.QueryContext(ctx, query, args...)
 	if err != nil {
 		return nil, err

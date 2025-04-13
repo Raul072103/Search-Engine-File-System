@@ -7,6 +7,8 @@ import (
 	"math"
 	"os"
 	"path/filepath"
+	"strings"
+	"time"
 )
 
 type Repo interface {
@@ -105,6 +107,7 @@ func (fr *fileRepo) Stats(path string) (*models.File, error) {
 
 	file.Type.TypeID = typeId
 	file.Type.UpdatedAt = file.UpdatedAt
+	file.Rank = calculateStaticFileScore(file)
 
 	return file, err
 }
@@ -137,4 +140,23 @@ func getFileExtension(path string, isDir bool) string {
 		return ""
 	}
 	return filepath.Ext(path)
+}
+
+// calculateStaticFileScore calculates a score at insertion time based on factors considered to affect the ranking
+func calculateStaticFileScore(file *models.File) float64 {
+	pathDepth := float64(pathDepth(file.Path))
+	size := float64(file.Size) / 1_000_000
+	updatedAt := file.UpdatedAt
+	currentTime := time.Now()
+	timeDifference := currentTime.Sub(updatedAt).Seconds()
+
+	sizePenalty := 1 / (1 + size)
+	timePenalty := 1 / (1 + timeDifference)
+	depthWeight := 1 / (1 + pathDepth)
+
+	return sizePenalty*0.2 + timePenalty*0.6 + depthWeight*0.2
+}
+
+func pathDepth(path string) int {
+	return strings.Count(path, "\\")
 }
