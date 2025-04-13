@@ -26,7 +26,7 @@ type Application struct {
 	Config      ApplicationConfig
 	DBRepo      database.Repo
 	FileRepo    file.Repo
-	USNRepo     usn.Repo
+	USN         usn.Repo
 	Processor   batch.Processor
 	Crawler     crawler.Crawler
 	EventsQueue *queue.InMemoryQueue
@@ -78,14 +78,23 @@ func main() {
 	//	}
 	//}
 
-	err = app.USNRepo.Executor.ExecuteReadUSNJournal()
-	if err != nil {
-		app.Logger.Error("error reading usn journal", zap.Error(err))
-	}
+	//err = app.USNRepo.Executor.ExecuteReadUSNJournal()
+	//if err != nil {
+	//	app.Logger.Error("error reading usn journal", zap.Error(err))
+	//}
+	//
+	//err = app.USNRepo.Executor.ExecuteQueryUSNJournal()
+	//if err != nil {
+	//	app.Logger.Error("error querying usn journal", zap.Error(err))
+	//}
 
-	err = app.USNRepo.Executor.ExecuteQueryUSNJournal()
+	records, err := app.USN.Parser.ReadLogs("./usn_logs.log")
 	if err != nil {
 		app.Logger.Error("error querying usn journal", zap.Error(err))
+	}
+
+	for _, record := range records {
+		fmt.Println(record.String())
 	}
 
 	app.Logger.Info("main goroutine finished")
@@ -163,7 +172,7 @@ func setup() *Application {
 		CurrentUSN:  "",
 		NextUSN:     "",
 	}
-	app.USNRepo = usn.NewRepo(usnExecutorConfig)
+	app.USN = usn.NewRepo(usnExecutorConfig)
 
 	return &app
 }

@@ -6,7 +6,7 @@ type Repo struct {
 		ExecuteQueryUSNJournal() error
 	}
 
-	Reader interface {
+	Parser interface {
 		ReadLogs(string) ([]Record, error)
 	}
 }
@@ -14,6 +14,6 @@ type Repo struct {
 func NewRepo(executorConfig ExecutorConfig) Repo {
 	return Repo{
 		Executor: newExecutor(executorConfig),
-		Reader:   newReader(),
+		Parser:   newParser(),
 	}
 }
