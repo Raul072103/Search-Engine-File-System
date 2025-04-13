@@ -5,5 +5,9 @@ CREATE TABLE files (
    size BIGINT,
    mode BIGINT,
    extension VARCHAR,
+   file_id BIGINT UNIQUE,
+   parent_id BIGINT,
+   rank DOUBLE PRECISION,
+   hash CHAR(32),
    updated_at TIMESTAMP
 );

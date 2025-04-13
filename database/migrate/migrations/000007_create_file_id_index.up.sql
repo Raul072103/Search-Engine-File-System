@@ -1,0 +1,1 @@
+CREATE INDEX idx_file_id ON files (file_id);
