@@ -129,6 +129,36 @@ func (r *fileRepo) Delete(ctx context.Context, file *models.File) error {
 	return err
 }
 
+// GetAllDirectoriesFileIDs returns a list with all directories File IDs from the database
+func (r *fileRepo) GetAllDirectoriesFileIDs(ctx context.Context) ([]int64, error) {
+	query := `
+		SELECT file_id
+		FROM files 
+		WHERE extension = "";
+	`
+
+	ctx, cancel := context.WithTimeout(ctx, InsertFileTimeoutDuration)
+	defer cancel()
+
+	rows, err := r.db.QueryContext(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+
+	var directoriesIDs = make([]int64, 0)
+	for rows.Next() {
+		var directoryID int64
+		err := rows.Scan(&directoryID)
+		if err != nil {
+			return nil, err
+		}
+
+		directoriesIDs = append(directoriesIDs, directoryID)
+	}
+
+	return directoriesIDs, nil
+}
+
 // insertTxtFileContent helper method to insert the content of the file in "contents" table5
 func (r *fileRepo) insertTxtFileContent(ctx context.Context, tx *sql.Tx, file *models.File) error {
 	fileContent := &file.Content

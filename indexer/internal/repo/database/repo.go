@@ -19,6 +19,7 @@ type Repo struct {
 		Insert(ctx context.Context, file *models.File) error
 		Update(ctx context.Context, file *models.File) error
 		Delete(ctx context.Context, file *models.File) error
+		GetAllDirectoriesFileIDs(ctx context.Context) ([]int64, error)
 	}
 }
 
