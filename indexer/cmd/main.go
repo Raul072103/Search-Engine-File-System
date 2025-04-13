@@ -10,7 +10,7 @@ import (
 	"MyFileExporer/indexer/internal/queue"
 	"MyFileExporer/indexer/internal/repo/database"
 	"MyFileExporer/indexer/internal/repo/file"
-	"context"
+	"MyFileExporer/indexer/internal/usn"
 	"database/sql"
 	"encoding/json"
 	"fmt"
@@ -18,7 +18,6 @@ import (
 	"go.uber.org/zap"
 	"log"
 	"os"
-	"time"
 )
 
 // Application is the entry point in the data_provider service
@@ -27,6 +26,7 @@ type Application struct {
 	Config      ApplicationConfig
 	DBRepo      database.Repo
 	FileRepo    file.Repo
+	USNRepo     usn.Repo
 	Processor   batch.Processor
 	Crawler     crawler.Crawler
 	EventsQueue *queue.InMemoryQueue
@@ -47,35 +47,45 @@ func main() {
 
 	app := setup()
 
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	//ctx, cancel := context.WithCancel(context.Background())
+	//defer cancel()
+	//
+	//crawlerChan := make(chan struct{})
+	//
+	//// Start processor
+	//go func() {
+	//	err := app.Processor.Run(ctx)
+	//	if err != nil {
+	//		app.Logger.Error(err.Error())
+	//		return
+	//	}
+	//}()
+	//
+	//// Start crawler
+	//go func() {
+	//	app.Crawler.Run(ctx)
+	//	crawlerChan <- struct{}{}
+	//}()
+	//
+	//// Main goroutine waits until the crawler is finish for it to finish
+	//<-crawlerChan
+	//
+	//for {
+	//	if app.EventsQueue.Length() > 0 {
+	//		time.Sleep(time.Second * 10)
+	//	} else {
+	//		break
+	//	}
+	//}
 
-	crawlerChan := make(chan struct{})
+	err = app.USNRepo.Executor.ExecuteReadUSNJournal()
+	if err != nil {
+		app.Logger.Error("error reading usn journal", zap.Error(err))
+	}
 
-	// Start processor
-	go func() {
-		err := app.Processor.Run(ctx)
-		if err != nil {
-			app.Logger.Error(err.Error())
-			return
-		}
-	}()
-
-	// Start crawler
-	go func() {
-		app.Crawler.Run(ctx)
-		crawlerChan <- struct{}{}
-	}()
-
-	// Main goroutine waits until the crawler is finish for it to finish
-	<-crawlerChan
-
-	for {
-		if app.EventsQueue.Length() > 0 {
-			time.Sleep(time.Second * 10)
-		} else {
-			break
-		}
+	err = app.USNRepo.Executor.ExecuteQueryUSNJournal()
+	if err != nil {
+		app.Logger.Error("error querying usn journal", zap.Error(err))
 	}
 
 	app.Logger.Info("main goroutine finished")
@@ -145,6 +155,15 @@ func setup() *Application {
 	crawlerConfig := app.loadCrawlerConfig("./config.json")
 	fileCrawler := crawler.New(app.FileRepo, eventsQueue, crawlerLogger, crawlerConfig)
 	app.Crawler = fileCrawler
+
+	// USN Repo
+	usnExecutorConfig := usn.ExecutorConfig{
+		USNLogsPath: "./usn_logs.log",
+		NextUSNPath: "./next_usn.json",
+		CurrentUSN:  "",
+		NextUSN:     "",
+	}
+	app.USNRepo = usn.NewRepo(usnExecutorConfig)
 
 	return &app
 }
