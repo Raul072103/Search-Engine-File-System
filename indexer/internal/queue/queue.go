@@ -7,9 +7,10 @@ import (
 )
 
 const (
-	InsertEvent = "INSERT"
-	UpdateEvent = "UPDATE"
-	DeleteEvent = "DELETE"
+	InsertEvent     = "INSERT"
+	UpdateEvent     = "UPDATE"
+	DeleteEvent     = "DELETE"
+	RecursiveDelete = "RECURSIVE_DELETE"
 )
 
 var (
@@ -31,6 +32,10 @@ func (d *DBEvent) IsUpdate() bool {
 
 func (d *DBEvent) IsDelete() bool {
 	return d.Type == DeleteEvent
+}
+
+func (d *DBEvent) IsRecursiveDelete() bool {
+	return d.Type == RecursiveDelete
 }
 
 type InMemoryQueue struct {

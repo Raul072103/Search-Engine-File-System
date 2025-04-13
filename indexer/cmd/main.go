@@ -84,10 +84,10 @@ func main() {
 		app.Logger.Error("error reading usn journal", zap.Error(err))
 	}
 
-	err = app.USN.Executor.ExecuteQueryUSNJournal()
-	if err != nil {
-		app.Logger.Error("error querying usn journal", zap.Error(err))
-	}
+	//err = app.USN.Executor.ExecuteQueryUSNJournal()
+	//if err != nil {
+	//	app.Logger.Error("error querying usn journal", zap.Error(err))
+	//}
 
 	records, err := app.USN.Parser.ReadLogs("./usn_logs.log")
 	if err != nil {
@@ -113,6 +113,21 @@ func main() {
 	}
 
 	fmt.Println("different directories", differentDirectories)
+
+	for _, directoryID := range differentDirectories {
+		directory, err := app.DBRepo.Files.GetFileByWindowsFileID(context.Background(), directoryID)
+		if err != nil {
+			app.Logger.Error("error retrieving directory fy file ID", zap.Error(err))
+			return
+		}
+
+		directoryFiles, err := app.DBRepo.Files.GetAllFilesWithParent(context.Background(), directoryID)
+		if err != nil {
+			app.Logger.Error("error retrieving directory children", zap.Error(err))
+			return
+		}
+
+	}
 
 	app.Logger.Info("main goroutine finished")
 }

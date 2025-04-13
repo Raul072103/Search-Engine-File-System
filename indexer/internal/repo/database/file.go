@@ -230,6 +230,35 @@ func (r *fileRepo) GetAllFilesWithParent(ctx context.Context, parentID int64) ([
 	return files, nil
 }
 
+// DeleteAllUnderDirectory deletes all descendants of directory, including directory itself
+func (r *fileRepo) DeleteAllUnderDirectory(ctx context.Context, directory *models.File) error {
+	query := `
+		WITH RECURSIVE descendants AS (
+		  SELECT id, file_id
+		  FROM files
+		  WHERE file_id = $1 
+		
+		  UNION ALL
+		
+		  SELECT f.id, f.file_id
+		  FROM files f
+		  INNER JOIN descendants d ON f.parent_id = d.file_id
+		)
+		DELETE FROM files
+		WHERE file_id IN (SELECT file_id FROM descendants);
+	`
+
+	ctx, cancel := context.WithTimeout(ctx, DeleteRecursiveFilesTimeoutDuration)
+	defer cancel()
+
+	_, err := r.db.ExecContext(ctx, query, directory.WindowsFileID)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // insertTxtFileContent helper method to insert the content of the file in "contents" table5
 func (r *fileRepo) insertTxtFileContent(ctx context.Context, tx *sql.Tx, file *models.File) error {
 	fileContent := &file.Content

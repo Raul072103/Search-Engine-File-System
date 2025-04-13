@@ -11,6 +11,7 @@ import (
 
 type Repo interface {
 	Read(path string) (*models.File, error)
+	ReadDirectoryFiles(directoryPath string) ([]models.File, error)
 	Stats(path string) (*models.File, error)
 }
 
@@ -106,6 +107,29 @@ func (fr *fileRepo) Stats(path string) (*models.File, error) {
 	file.Type.UpdatedAt = file.UpdatedAt
 
 	return file, err
+}
+
+// ReadDirectoryFiles reads all files in a given directory and returns them as a slice of models.File.
+func (fr *fileRepo) ReadDirectoryFiles(directoryPath string) ([]models.File, error) {
+	var files []models.File
+
+	filesInfo, err := os.ReadDir(directoryPath)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, fileInfo := range filesInfo {
+		filePath := filepath.Join(directoryPath, fileInfo.Name())
+
+		file, err := fr.Read(filePath)
+		if err != nil {
+			continue
+		}
+
+		files = append(files, *file)
+	}
+
+	return files, nil
 }
 
 func getFileExtension(path string, isDir bool) string {

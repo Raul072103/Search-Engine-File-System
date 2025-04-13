@@ -29,10 +29,11 @@ const (
 )
 
 var (
-	ErrExpectedInsertEvent = errors.New("expected the event to of type INSERT")
-	ErrExpectedUpdateEvent = errors.New("expected the event to of type UPDATE")
-	ErrExpectedDeleteEvent = errors.New("expected the event to of type DELETE")
-	ErrUnknownEvent        = errors.New("unknown event sent for processing")
+	ErrExpectedInsertEvent          = errors.New("expected the event to be of type INSERT")
+	ErrExpectedUpdateEvent          = errors.New("expected the event to be of type UPDATE")
+	ErrExpectedDeleteEvent          = errors.New("expected the event to be of type DELETE")
+	ErrExpectedRecursiveDeleteEvent = errors.New("expected the event to be of type RECURSIVE DELETE")
+	ErrUnknownEvent                 = errors.New("unknown event sent for processing")
 )
 
 // NewProcessor creates a new instance of the Processor.
@@ -89,6 +90,10 @@ func (p *processor) HandleEvent(event queue.DBEvent) error {
 		return p.ExecuteDeleteEvent(event)
 	}
 
+	if event.IsRecursiveDelete() {
+		return p.ExecuteRecursiveDeleteEvent(event)
+	}
+
 	return ErrUnknownEvent
 }
 
@@ -124,5 +129,15 @@ func (p *processor) ExecuteDeleteEvent(event queue.DBEvent) error {
 	}
 
 	err := p.DBRepo.Files.Delete(context.Background(), &event.File)
+	return err
+}
+
+// ExecuteRecursiveDeleteEvent takes a RECURSIVE DELETE operation and applies it on the database.
+func (p *processor) ExecuteRecursiveDeleteEvent(event queue.DBEvent) error {
+	if !event.IsRecursiveDelete() {
+		return ErrExpectedRecursiveDeleteEvent
+	}
+
+	err := p.DBRepo.Files.DeleteAllUnderDirectory(context.Background(), &event.File)
 	return err
 }

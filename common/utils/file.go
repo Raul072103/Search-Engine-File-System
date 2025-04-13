@@ -1,6 +1,9 @@
 package utils
 
-import "golang.org/x/sys/windows"
+import (
+	"golang.org/x/sys/windows"
+	"os"
+)
 
 func GetFileID(path string) (*uint64, error) {
 	handle, err := windows.CreateFile(
@@ -27,4 +30,15 @@ func GetFileID(path string) (*uint64, error) {
 	fileID := (uint64(info.FileIndexHigh) << 32) | uint64(info.FileIndexLow)
 
 	return &fileID, nil
+}
+
+func FileExists(path string) (bool, error) {
+	_, err := os.Stat(path)
+	if err == nil {
+		return true, nil
+	}
+	if os.IsNotExist(err) {
+		return false, nil
+	}
+	return false, err
 }
