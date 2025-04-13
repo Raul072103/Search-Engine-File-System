@@ -70,39 +70,47 @@ func (r *fileRepo) Insert(ctx context.Context, file *models.File) error {
 	})
 }
 
-// Update updates a file with the given path based on the "non-null" fields set in the File instance.
+// Update updates a file with the given WindowsFileID based on the non-zero/non-empty fields set in the File instance.
 func (r *fileRepo) Update(ctx context.Context, file *models.File) error {
 	return withTransaction(r.db, ctx, func(tx *sql.Tx) error {
-		// Update files table
 		fileQuery := `
-		UPDATE files
-		SET name = COALESCE(NULLIF($1::TEXT, ''), name),
-		    size = COALESCE(NULLIF($2::BIGINT, 0), size),
-		    mode = COALESCE(NULLIF($3::BIGINT, 0), mode),
-		    extension = COALESCE(NULLIF($4::TEXT, ''), extension),
-		    updated_at = $5
-		WHERE path = $6
-		RETURNING id
-	`
+			UPDATE files
+			SET path = COALESCE(NULLIF($1::TEXT, ''), path),
+				name = COALESCE(NULLIF($2::TEXT, ''), name),
+				size = COALESCE(NULLIF($3::BIGINT, 0), size),
+				mode = COALESCE(NULLIF($4::BIGINT, 0), mode),
+				extension = COALESCE(NULLIF($5::TEXT, ''), extension),
+				parent_id = COALESCE(NULLIF($6::BIGINT, 0), parent_id),
+				rank = COALESCE(NULLIF($7::INT, 0), rank),
+				hash = COALESCE(NULLIF($8::TEXT, ''), hash),
+				updated_at = COALESCE(NULLIF($9, to_timestamp(0)), updated_at)
+			WHERE file_id = $10
+			RETURNING id
+		`
+
 		err := tx.QueryRowContext(ctx, fileQuery,
+			file.Path,
 			file.Name,
 			file.Size,
 			file.Mode,
 			file.Extension,
+			file.ParentFileID,
+			file.Rank,
+			file.Hash,
 			file.UpdatedAt,
-			file.Path,
+			file.WindowsFileID,
 		).Scan(&file.ID)
 		if err != nil {
 			return err
 		}
 
-		err = r.updateFileContent(ctx, tx, file)
-		if err != nil {
-			return err
+		if r.typesMap.TypesMapping[file.Type.TypeID] == "txt" {
+			if err := r.updateFileContent(ctx, tx, file); err != nil {
+				return err
+			}
 		}
 
-		err = r.updateFileType(ctx, tx, file)
-		if err != nil {
+		if err := r.updateFileType(ctx, tx, file); err != nil {
 			return err
 		}
 
@@ -236,7 +244,7 @@ func (r *fileRepo) DeleteAllUnderDirectory(ctx context.Context, directory *model
 		WITH RECURSIVE descendants AS (
 		  SELECT id, file_id
 		  FROM files
-		  WHERE file_id = $1 
+		  WHERE file_id = $1  -- root directory's file_id
 		
 		  UNION ALL
 		
@@ -347,8 +355,8 @@ func (r *fileRepo) updateFileContent(ctx context.Context, tx *sql.Tx, file *mode
 func (r *fileRepo) updateFileType(ctx context.Context, tx *sql.Tx, file *models.File) error {
 	typeQuery := `
 	UPDATE types
-	SET type = COALESCE(NULLIF($1, ''), types.type),
-	    updated_at = $2,
+	SET type = COALESCE(NULLIF($1, -1), types.type),
+	    updated_at = $2
 	WHERE file_id = $3
 	`
 	_, err := tx.ExecContext(ctx, typeQuery,

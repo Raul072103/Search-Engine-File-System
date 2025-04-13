@@ -64,10 +64,13 @@ func (c *crawler) Run(ctx context.Context) {
 }
 
 func (c *crawler) Crawl(ctx context.Context, startPath string) {
-	var explorePaths = make([]string, 0)
-	var parentID int64 = 0
+	type pathWithParent struct {
+		path     string
+		parentID int64
+	}
 
-	explorePaths = append(explorePaths, startPath)
+	var explorePaths = make([]pathWithParent, 0)
+	explorePaths = append(explorePaths, pathWithParent{path: startPath, parentID: 0})
 
 	for {
 		explorePathsLength := len(explorePaths)
@@ -76,8 +79,11 @@ func (c *crawler) Crawl(ctx context.Context, startPath string) {
 			break
 		}
 
-		path := explorePaths[explorePathsLength-1]
-		explorePaths = explorePaths[:explorePathsLength-1]
+		pw := explorePaths[len(explorePaths)-1]
+		explorePaths = explorePaths[:len(explorePaths)-1]
+
+		path := pw.path
+		parentID := pw.parentID
 
 		select {
 		case <-ctx.Done():
@@ -122,7 +128,10 @@ func (c *crawler) Crawl(ctx context.Context, startPath string) {
 				// Recur for each entry
 				for _, entry := range entries {
 					entryPath := filepath.Join(path, entry.Name())
-					explorePaths = append(explorePaths, entryPath)
+					explorePaths = append(explorePaths, pathWithParent{
+						path:     entryPath,
+						parentID: fileModel.WindowsFileID,
+					})
 				}
 
 				// Save as last traversed directory

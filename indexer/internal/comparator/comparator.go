@@ -79,19 +79,15 @@ func (d *directory) Run(directory models.File, directoryFiles []models.File) err
 					continue
 				}
 
-				deleteEvent := queue.DBEvent{
-					Type: queue.DeleteEvent,
-					File: dbFile,
-				}
-				insertEvent := queue.DBEvent{
-					Type: queue.InsertEvent,
+				updateEvent := queue.DBEvent{
+					Type: queue.UpdateEvent,
 					File: fileSystemReadFile,
 				}
 
 				// ORDER MATTERS!
-				d.eventsQueue.Push(insertEvent)
-				d.eventsQueue.Push(deleteEvent)
+				d.eventsQueue.Push(updateEvent)
 			} else {
+				fileSystemReadFile.ParentFileID = directory.WindowsFileID
 				newReadFiles = append(newReadFiles, fileSystemReadFile)
 			}
 
@@ -99,12 +95,21 @@ func (d *directory) Run(directory models.File, directoryFiles []models.File) err
 
 		// don't forget for newReadFiles
 		for _, newFile := range newReadFiles {
+			// insert only that file
 			insertEvent := queue.DBEvent{
 				Type: queue.InsertEvent,
 				File: newFile,
 			}
 
 			d.eventsQueue.Push(insertEvent)
+
+			// if it is a directory, insert its children as well
+			if newFile.Extension == "" {
+				err := d.insertAllDirectoriesChildren(newFile)
+				if err != nil {
+					return err
+				}
+			}
 		}
 
 		// don't forget for undeleted map entries
@@ -115,6 +120,32 @@ func (d *directory) Run(directory models.File, directoryFiles []models.File) err
 			}
 
 			d.eventsQueue.Push(deleteEvent)
+		}
+	}
+
+	return nil
+}
+
+func (d *directory) insertAllDirectoriesChildren(directory models.File) error {
+	files, err := d.fileRepo.ReadDirectoryFiles(directory.Path)
+	if err != nil {
+		return err
+	}
+
+	for _, childFile := range files {
+		childFile.ParentFileID = directory.WindowsFileID
+		insertEvent := queue.DBEvent{
+			Type: queue.InsertEvent,
+			File: childFile,
+		}
+
+		d.eventsQueue.Push(insertEvent)
+
+		if childFile.Extension == "" {
+			err := d.insertAllDirectoriesChildren(childFile)
+			if err != nil {
+				return err
+			}
 		}
 	}
 
