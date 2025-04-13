@@ -4,7 +4,6 @@ import (
 	"MyFileExporer/common/models"
 	"MyFileExporer/common/utils"
 	"MyFileExporer/indexer/internal/queue"
-	"MyFileExporer/indexer/internal/repo/database"
 	"MyFileExporer/indexer/internal/repo/file"
 	"go.uber.org/zap"
 )
@@ -14,15 +13,13 @@ type Directory interface {
 }
 
 type directory struct {
-	dbRepo      *database.Repo
 	fileRepo    file.Repo
 	eventsQueue *queue.InMemoryQueue
 	logger      *zap.Logger
 }
 
-func New(dbRepo *database.Repo, fileRepo file.Repo, eventsQueue *queue.InMemoryQueue, logger *zap.Logger) Directory {
+func New(fileRepo file.Repo, eventsQueue *queue.InMemoryQueue, logger *zap.Logger) Directory {
 	return &directory{
-		dbRepo:      dbRepo,
 		fileRepo:    fileRepo,
 		eventsQueue: eventsQueue,
 		logger:      logger,
@@ -91,8 +88,9 @@ func (d *directory) Run(directory models.File, directoryFiles []models.File) err
 					File: fileSystemReadFile,
 				}
 
-				d.eventsQueue.Push(deleteEvent)
+				// ORDER MATTERS!
 				d.eventsQueue.Push(insertEvent)
+				d.eventsQueue.Push(deleteEvent)
 			} else {
 				newReadFiles = append(newReadFiles, fileSystemReadFile)
 			}
@@ -121,8 +119,4 @@ func (d *directory) Run(directory models.File, directoryFiles []models.File) err
 	}
 
 	return nil
-}
-
-func (d *directory) compareDirectory() {
-
 }

@@ -5,6 +5,7 @@ import (
 	"MyFileExporer/common/logger"
 	"MyFileExporer/common/models"
 	"MyFileExporer/indexer/internal/batch"
+	"MyFileExporer/indexer/internal/comparator"
 	"MyFileExporer/indexer/internal/crawler"
 	"MyFileExporer/indexer/internal/db"
 	"MyFileExporer/indexer/internal/queue"
@@ -19,6 +20,7 @@ import (
 	"go.uber.org/zap"
 	"log"
 	"os"
+	"time"
 )
 
 // Application is the entry point in the data_provider service
@@ -28,6 +30,7 @@ type Application struct {
 	DBRepo      database.Repo
 	FileRepo    file.Repo
 	USN         usn.Repo
+	Comparator  comparator.Directory
 	Processor   batch.Processor
 	Crawler     crawler.Crawler
 	EventsQueue *queue.InMemoryQueue
@@ -48,85 +51,95 @@ func main() {
 
 	app := setup()
 
-	//ctx, cancel := context.WithCancel(context.Background())
-	//defer cancel()
-	//
-	//crawlerChan := make(chan struct{})
-	//
-	//// Start processor
-	//go func() {
-	//	err := app.Processor.Run(ctx)
-	//	if err != nil {
-	//		app.Logger.Error(err.Error())
-	//		return
-	//	}
-	//}()
-	//
-	//// Start crawler
-	//go func() {
-	//	app.Crawler.Run(ctx)
-	//	crawlerChan <- struct{}{}
-	//}()
-	//
-	//// Main goroutine waits until the crawler is finish for it to finish
-	//<-crawlerChan
-	//
-	//for {
-	//	if app.EventsQueue.Length() > 0 {
-	//		time.Sleep(time.Second * 10)
-	//	} else {
-	//		break
-	//	}
-	//}
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 
-	err = app.USN.Executor.ExecuteReadUSNJournal()
-	if err != nil {
-		app.Logger.Error("error reading usn journal", zap.Error(err))
-	}
+	crawlerChan := make(chan struct{})
 
-	//err = app.USN.Executor.ExecuteQueryUSNJournal()
-	//if err != nil {
-	//	app.Logger.Error("error querying usn journal", zap.Error(err))
-	//}
-
-	records, err := app.USN.Parser.ReadLogs("./usn_logs.log")
-	if err != nil {
-		app.Logger.Error("error querying usn journal", zap.Error(err))
-		return
-	}
-
-	parentIDs, err := app.DBRepo.Files.GetAllDirectoriesFileIDs(context.Background())
-	if err != nil {
-		app.Logger.Error("error getting parent IDs", zap.Error(err))
-		return
-	}
-
-	parentMap := make(map[int64]any)
-	for _, parentID := range parentIDs {
-		parentMap[parentID] = struct{}{}
-	}
-
-	differentDirectories, err := app.USN.DifferenceFinder.FindUpdatedDirectories(records, parentMap)
-	if err != nil {
-		app.Logger.Error("error finding different directories", zap.Error(err))
-		return
-	}
-
-	fmt.Println("different directories", differentDirectories)
-
-	for _, directoryID := range differentDirectories {
-		directory, err := app.DBRepo.Files.GetFileByWindowsFileID(context.Background(), directoryID)
+	// Start processor
+	go func() {
+		err := app.Processor.Run(ctx)
 		if err != nil {
-			app.Logger.Error("error retrieving directory fy file ID", zap.Error(err))
+			app.Logger.Error(err.Error())
+			return
+		}
+	}()
+
+	// Start crawler
+	go func() {
+		app.Crawler.Run(ctx)
+		crawlerChan <- struct{}{}
+	}()
+
+	// Main goroutine waits until the crawler is finish for it to finish
+	<-crawlerChan
+
+	go func() {
+		err = app.USN.Executor.ExecuteReadUSNJournal()
+		if err != nil {
+			app.Logger.Error("error reading usn journal", zap.Error(err))
+		}
+
+		//err = app.USN.Executor.ExecuteQueryUSNJournal()
+		//if err != nil {
+		//	app.Logger.Error("error querying usn journal", zap.Error(err))
+		//}
+
+		records, err := app.USN.Parser.ReadLogs("./usn_logs.log")
+		if err != nil {
+			app.Logger.Error("error querying usn journal", zap.Error(err))
 			return
 		}
 
-		directoryFiles, err := app.DBRepo.Files.GetAllFilesWithParent(context.Background(), directoryID)
+		parentIDs, err := app.DBRepo.Files.GetAllDirectoriesFileIDs(context.Background())
 		if err != nil {
-			app.Logger.Error("error retrieving directory children", zap.Error(err))
+			app.Logger.Error("error getting parent IDs", zap.Error(err))
 			return
 		}
 
+		parentMap := make(map[int64]any)
+		for _, parentID := range parentIDs {
+			parentMap[parentID] = struct{}{}
+		}
+
+		differentDirectories, err := app.USN.DifferenceFinder.FindUpdatedDirectories(records, parentMap)
+		if err != nil {
+			app.Logger.Error("error finding different directories", zap.Error(err))
+			return
+		}
+
+		fmt.Println("different directories", differentDirectories)
+
+		for _, directoryID := range differentDirectories {
+			directory, err := app.DBRepo.Files.GetFileByWindowsFileID(context.Background(), directoryID)
+			if err != nil {
+				app.Logger.Error("error retrieving directory fy file ID", zap.Error(err))
+				return
+			}
+
+			directoryFiles, err := app.DBRepo.Files.GetAllFilesWithParent(context.Background(), directoryID)
+			if err != nil {
+				app.Logger.Error("error retrieving directory children", zap.Error(err))
+				return
+			}
+
+			err = app.Comparator.Run(directory, directoryFiles)
+			if err != nil {
+				app.Logger.Error("error running comparator", zap.Error(err))
+				return
+			}
+
+		}
+	}()
+
+	time.Sleep(time.Second * 20)
+
+	for {
+		if app.EventsQueue.Length() > 0 {
+			time.Sleep(time.Second * 10)
+		} else {
+			break
+		}
 	}
 
 	app.Logger.Info("main goroutine finished")
@@ -205,6 +218,10 @@ func setup() *Application {
 		NextUSN:     "",
 	}
 	app.USN = usn.NewRepo(usnExecutorConfig)
+
+	// Comparator
+	comparatorLogger := logger.InitLogger("./comparator.log")
+	app.Comparator = comparator.New(app.FileRepo, app.EventsQueue, comparatorLogger)
 
 	return &app
 }
