@@ -11,6 +11,7 @@ import (
 	"MyFileExporer/indexer/internal/repo/database"
 	"MyFileExporer/indexer/internal/repo/file"
 	"MyFileExporer/indexer/internal/usn"
+	"context"
 	"database/sql"
 	"encoding/json"
 	"fmt"
@@ -78,24 +79,40 @@ func main() {
 	//	}
 	//}
 
-	//err = app.USNRepo.Executor.ExecuteReadUSNJournal()
-	//if err != nil {
-	//	app.Logger.Error("error reading usn journal", zap.Error(err))
-	//}
-	//
-	//err = app.USNRepo.Executor.ExecuteQueryUSNJournal()
-	//if err != nil {
-	//	app.Logger.Error("error querying usn journal", zap.Error(err))
-	//}
+	err = app.USN.Executor.ExecuteReadUSNJournal()
+	if err != nil {
+		app.Logger.Error("error reading usn journal", zap.Error(err))
+	}
 
-	records, err := app.USN.Parser.ReadLogs("./usn_logs.log")
+	err = app.USN.Executor.ExecuteQueryUSNJournal()
 	if err != nil {
 		app.Logger.Error("error querying usn journal", zap.Error(err))
 	}
 
-	for _, record := range records {
-		fmt.Println(record.String())
+	records, err := app.USN.Parser.ReadLogs("./usn_logs.log")
+	if err != nil {
+		app.Logger.Error("error querying usn journal", zap.Error(err))
+		return
 	}
+
+	parentIDs, err := app.DBRepo.Files.GetAllDirectoriesFileIDs(context.Background())
+	if err != nil {
+		app.Logger.Error("error getting parent IDs", zap.Error(err))
+		return
+	}
+
+	parentMap := make(map[int64]any)
+	for _, parentID := range parentIDs {
+		parentMap[parentID] = struct{}{}
+	}
+
+	differentDirectories, err := app.USN.DifferenceFinder.FindUpdatedDirectories(records, parentMap)
+	if err != nil {
+		app.Logger.Error("error finding different directories", zap.Error(err))
+		return
+	}
+
+	fmt.Println("different directories", differentDirectories)
 
 	app.Logger.Info("main goroutine finished")
 }

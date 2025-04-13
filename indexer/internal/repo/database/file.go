@@ -134,7 +134,7 @@ func (r *fileRepo) GetAllDirectoriesFileIDs(ctx context.Context) ([]int64, error
 	query := `
 		SELECT file_id
 		FROM files 
-		WHERE extension = "";
+		WHERE extension = '';
 	`
 
 	ctx, cancel := context.WithTimeout(ctx, InsertFileTimeoutDuration)
@@ -157,6 +157,77 @@ func (r *fileRepo) GetAllDirectoriesFileIDs(ctx context.Context) ([]int64, error
 	}
 
 	return directoriesIDs, nil
+}
+
+// GetFileByWindowsFileID returns the file with the given Windows File ID
+func (r *fileRepo) GetFileByWindowsFileID(ctx context.Context, fileID int64) (models.File, error) {
+	query := `
+		SELECT id, path, name, size, mode, extension, file_id, parent_id, rank, hash, updated_at
+		FROM files
+		WHERE file_id = $1
+	`
+
+	ctx, cancel := context.WithTimeout(ctx, InsertFileTimeoutDuration)
+	defer cancel()
+
+	var file models.File
+	err := r.db.QueryRowContext(ctx, query, fileID).Scan(
+		&file.ID,
+		&file.Path,
+		&file.Name,
+		&file.Size,
+		&file.Mode,
+		&file.Extension,
+		&file.WindowsFileID,
+		&file.ParentFileID,
+		&file.Rank,
+		&file.Hash,
+		&file.UpdatedAt,
+	)
+
+	return file, err
+}
+
+// GetAllFilesWithParent returns all files that have as parent the given Windows File ID
+func (r *fileRepo) GetAllFilesWithParent(ctx context.Context, parentID int64) ([]models.File, error) {
+	query := `
+		SELECT id, path, name, size, mode, extension, file_id, parent_id, rank, hash, updated_at
+		FROM files
+		WHERE parent_id = $1
+	`
+
+	ctx, cancel := context.WithTimeout(ctx, InsertFileTimeoutDuration)
+	defer cancel()
+
+	rows, err := r.db.QueryContext(ctx, query, parentID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var files []models.File
+	for rows.Next() {
+		var file models.File
+		err := rows.Scan(
+			&file.ID,
+			&file.Path,
+			&file.Name,
+			&file.Size,
+			&file.Mode,
+			&file.Extension,
+			&file.WindowsFileID,
+			&file.ParentFileID,
+			&file.Rank,
+			&file.Hash,
+			&file.UpdatedAt,
+		)
+		if err != nil {
+			return nil, err
+		}
+		files = append(files, file)
+	}
+
+	return files, nil
 }
 
 // insertTxtFileContent helper method to insert the content of the file in "contents" table5

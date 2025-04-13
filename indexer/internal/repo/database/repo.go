@@ -20,6 +20,8 @@ type Repo struct {
 		Update(ctx context.Context, file *models.File) error
 		Delete(ctx context.Context, file *models.File) error
 		GetAllDirectoriesFileIDs(ctx context.Context) ([]int64, error)
+		GetFileByWindowsFileID(ctx context.Context, fileID int64) (models.File, error)
+		GetAllFilesWithParent(ctx context.Context, parentID int64) ([]models.File, error)
 	}
 }
 
