@@ -96,10 +96,10 @@ func setup() *Application {
 	var app Application
 	app.Config = ApplicationConfig{}
 
-	processorLogger := logger.InitLogger("./processor.log")
-	crawlerLogger := logger.InitLogger("./crawler.log")
-
-	app.Logger = logger.InitLogger("./indexer.log")
+	processorLogger := logger.InitLogger("./logs/processor.log")
+	crawlerLogger := logger.InitLogger("./logs/crawler.log")
+	comparatorLogger := logger.InitLogger("./logs/comparator.log")
+	app.Logger = logger.InitLogger("./logs/indexer.log")
 
 	// Database Config
 	dbAddress := fmt.Sprintf(
@@ -159,15 +159,12 @@ func setup() *Application {
 
 	// USN Repo
 	usnExecutorConfig := usn.ExecutorConfig{
-		USNLogsPath: "./usn_logs.log",
+		USNLogsPath: "./logs/usn_logs.log",
 		NextUSNPath: "./next_usn.json",
-		CurrentUSN:  "",
-		NextUSN:     "",
 	}
 	app.USN = usn.NewRepo(usnExecutorConfig)
 
 	// Comparator
-	comparatorLogger := logger.InitLogger("./comparator.log")
 	app.Comparator = comparator.New(app.FileRepo, app.EventsQueue, comparatorLogger)
 
 	return &app
@@ -202,7 +199,7 @@ func (app *Application) runComparator() {
 		app.Logger.Error("error querying usn journal", zap.Error(err))
 	}
 
-	records, err := app.USN.Parser.ReadLogs("./usn_logs.log")
+	records, err := app.USN.Parser.ReadLogs("./logs/usn_logs.log")
 	if err != nil {
 		app.Logger.Error("error querying usn journal", zap.Error(err))
 		return
