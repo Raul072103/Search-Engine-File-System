@@ -77,6 +77,11 @@ func main() {
 	}
 	defer client.Close()
 
+	//err = client.DeleteCollection(context.Background(), "queries")
+	//if err != nil {
+	//	panic(err)
+	//}
+
 	app := &application{
 		config:     cfg,
 		logger:     zapLogger,
