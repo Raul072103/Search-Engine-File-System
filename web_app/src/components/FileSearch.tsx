@@ -10,6 +10,7 @@ const FileSearch: React.FC = () => {
     });
 
     const [searchQuery, setSearchQuery] = useState("");
+    const [suggestions, setSuggestions] = useState<string[]>([]);
     const [results, setResults] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -110,6 +111,34 @@ const FileSearch: React.FC = () => {
 
     }, [searchQuery]);
 
+    useEffect(() => {
+        const controller = new AbortController();
+        const fetchSuggestions = async () => {
+            try {
+                if (!searchQuery.trim()) {
+                    setSuggestions([]);
+                    return;
+                }
+
+                const res = await fetch(`http://localhost:8080/v1/query-suggestions?query=${encodeURIComponent(searchQuery)}`, {
+                    signal: controller.signal
+                });
+
+                if (!res.ok) {
+                    throw new Error("Failed to fetch suggestions");
+                }
+
+                const data = await res.json();
+                setSuggestions(data || []);
+            } catch (err) {
+                console.error("Error fetching search results:", err);
+            }
+        };
+
+        fetchSuggestions();
+        return () => controller.abort();
+    }, [searchQuery]);
+
     // Pagination Logic
     const totalPages = Math.ceil(results.length / RESULTS_PER_PAGE);
     const startIndex = (currentPage - 1) * RESULTS_PER_PAGE;
@@ -150,6 +179,26 @@ const FileSearch: React.FC = () => {
                     placeholder="Extensions (comma-separated)"
                     value={searchParams.extensions}
                 />
+            </div>
+
+            {/* Suggestions */}
+            <div style={{ marginTop: "8px", marginBottom: "16px" }}>
+                {suggestions.length > 0 && (
+                    <div>
+                        <strong>Suggestions:</strong>
+                        <ul>
+                            {suggestions.map((suggestion, idx) => (
+                                <li
+                                    key={idx}
+                                    style={{ cursor: "pointer", color: "blue" }}
+                                    onClick={() => setSearchQuery(suggestion)}
+                                >
+                                    {suggestion}
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+                )}
             </div>
 
             {/* Display Results */}

@@ -52,16 +52,13 @@ func (app *application) searchHandler(w http.ResponseWriter, r *http.Request) {
 		var parts []string
 
 		if fileName != "" {
-			parts = append(parts, fileName)
+			parts = append(parts, "name:"+fileName)
 		}
 		if len(wordList) > 0 {
-			parts = append(parts, wordList...)
+			parts = append(parts, "content:"+strings.Join(wordList, ","))
 		}
 		if len(extensions) > 0 {
-			// Optionally add a prefix to distinguish extensions (e.g., ext:pdf)
-			for _, ext := range extensions {
-				parts = append(parts, "ext:"+ext)
-			}
+			parts = append(parts, "extensions:"+strings.Join(extensions, ","))
 		}
 
 		query := strings.Join(parts, " ")

@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 )
 
@@ -18,6 +19,8 @@ func (app *application) querySuggestions(w http.ResponseWriter, r *http.Request)
 		app.internalServerError(w, r, err)
 		return
 	}
+
+	fmt.Println("suggestions", suggestions)
 
 	err = writeJSON(w, http.StatusOK, suggestions)
 	if err != nil {
