@@ -62,8 +62,9 @@ func (app *application) mount() *chi.Mux {
 	mux.Route("/v1", func(r chi.Router) {
 		r.Get("/health", app.healthCheckHandler)
 
-		// Endpoints for the
+		// Endpoints for the API
 		r.Get("/search", app.searchHandler)
+		r.Get("/query-suggestions", app.querySuggestions)
 	})
 
 	return mux
