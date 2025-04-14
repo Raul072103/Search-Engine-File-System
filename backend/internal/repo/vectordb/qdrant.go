@@ -2,11 +2,12 @@ package vectordb
 
 import (
 	"context"
+	"github.com/google/uuid"
 	"github.com/qdrant/go-client/qdrant"
 )
 
 type Repo interface {
-	StoreQuery(id uint64, text string) error
+	StoreQuery(text string) error
 	SuggestSimilarQueries(input string, limit *uint64) ([]string, error)
 }
 
@@ -18,17 +19,19 @@ func New(client *qdrant.Client) Repo {
 	return &repo{client: client}
 }
 
-func (r *repo) StoreQuery(id uint64, text string) error {
+func (r *repo) StoreQuery(text string) error {
 	embedding, err := GetQueryEmbedding(text)
 	if err != nil {
 		return err
 	}
 
+	uid := uuid.New().String()
+
 	_, err = r.client.Upsert(context.Background(), &qdrant.UpsertPoints{
 		CollectionName: "queries",
 		Points: []*qdrant.PointStruct{
 			{
-				Id:      qdrant.NewIDNum(id),
+				Id:      qdrant.NewIDUUID(uid),
 				Vectors: qdrant.NewVectors(embedding...),
 				Payload: qdrant.NewValueMap(map[string]any{"text": text}),
 			},

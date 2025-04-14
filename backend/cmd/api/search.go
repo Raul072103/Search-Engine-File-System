@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strings"
 )
 
 type SearchPayload struct {
@@ -45,6 +46,31 @@ func (app *application) searchHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		app.internalServerError(w, r, err)
 		return
+	}
+
+	if len(files) > 0 {
+		var parts []string
+
+		if fileName != "" {
+			parts = append(parts, fileName)
+		}
+		if len(wordList) > 0 {
+			parts = append(parts, wordList...)
+		}
+		if len(extensions) > 0 {
+			// Optionally add a prefix to distinguish extensions (e.g., ext:pdf)
+			for _, ext := range extensions {
+				parts = append(parts, "ext:"+ext)
+			}
+		}
+
+		query := strings.Join(parts, " ")
+
+		err := app.qdrantRepo.StoreQuery(query)
+		if err != nil {
+			app.internalServerError(w, r, err)
+			return
+		}
 	}
 
 	err = jsonResponse(w, http.StatusOK, files)
