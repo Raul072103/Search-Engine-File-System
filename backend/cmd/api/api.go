@@ -2,6 +2,7 @@ package main
 
 import (
 	"MyFileExporer/backend/internal/repo/database"
+	"MyFileExporer/backend/internal/repo/vectordb"
 	"context"
 	"errors"
 	"github.com/go-chi/chi/v5"
@@ -16,9 +17,10 @@ import (
 )
 
 type application struct {
-	config config
-	logger *zap.Logger
-	dbRepo database.Repo
+	config     config
+	logger     *zap.Logger
+	dbRepo     database.Repo
+	qdrantRepo vectordb.Repo
 }
 
 type config struct {

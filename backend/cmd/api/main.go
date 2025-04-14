@@ -3,15 +3,19 @@ package main
 import (
 	"MyFileExporer/backend/internal/db"
 	"MyFileExporer/backend/internal/repo/database"
+	"MyFileExporer/backend/internal/repo/vectordb"
 	"MyFileExporer/common/env"
 	"MyFileExporer/common/logger"
+	"context"
 	"expvar"
 	"fmt"
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
+	"github.com/qdrant/go-client/qdrant"
 	"go.uber.org/zap"
 	"log"
 	"runtime"
+	"time"
 )
 
 const (
@@ -49,7 +53,7 @@ func main() {
 
 	zapLogger := logger.InitLogger("backend.log")
 
-	// Database
+	//Database
 	pgDb, err := db.New(
 		cfg.db.addr,
 		cfg.db.maxOpenConns,
@@ -81,8 +85,38 @@ func main() {
 	mux := app.mount()
 	app.logger.Fatal("server error", zap.Error(app.run(mux)))
 
+	err = app.qdrantSetup()
+	if err != nil {
+		app.logger.Error("error setting up vector db", zap.Error(err))
+		return
+	}
+
 	err = app.run(mux)
 	if err != nil {
 		app.logger.Fatal("server error", zap.Error(err))
 	}
+}
+
+func (app *application) qdrantSetup() error {
+	// Create new client
+	client, err := qdrant.NewClient(&qdrant.Config{
+		Host: "localhost",
+		Port: 6334,
+	})
+	if err != nil {
+		panic(err)
+	}
+	defer client.Close()
+
+	app.qdrantRepo = vectordb.New(client)
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+	defer cancel()
+
+	_, err = client.HealthCheck(ctx)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

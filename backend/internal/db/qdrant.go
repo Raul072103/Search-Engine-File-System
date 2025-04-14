@@ -5,7 +5,7 @@ import (
 	"github.com/qdrant/go-client/qdrant"
 )
 
-// CreateQueryCollection creates the qdrant colelction
+// CreateQueryCollection creates the qdrant collection
 func CreateQueryCollection() error {
 	client, err := qdrant.NewClient(&qdrant.Config{
 		Host: "localhost",
