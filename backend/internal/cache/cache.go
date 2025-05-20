@@ -40,6 +40,7 @@ type janitor struct {
 	nextPing time.Time
 }
 
+// TODO() instantiate janitor and run it
 func newCache() *cache {
 	requestMap := make(map[string]*cacheEntry, DefaultCacheSize)
 	janitorMap := make(map[time.Time]map[string]struct{}, DefaultTTLMapSize)
@@ -50,6 +51,8 @@ func newCache() *cache {
 		janitorMap:  janitorMap,
 	}
 }
+
+func (j *janitor) clean() {}
 
 func (cache *cache) Find(fs *database.FileSearchRequest) []models.File {
 	key := buildKeyFromRequest(fs)
@@ -89,8 +92,26 @@ func (cache *cache) Find(fs *database.FileSearchRequest) []models.File {
 	return nil
 }
 
-func (cache *cache) Add(fs *database.FileSearchRequest, files []models.File) error {
-	return nil
+func (cache *cache) Add(fs *database.FileSearchRequest, files []models.File) {
+	key := buildKeyFromRequest(fs)
+
+	cache.mutex.Lock()
+	defer cache.mutex.Unlock()
+
+	entry := &cacheEntry{
+		lastHit: time.Now(),
+		files:   files,
+	}
+
+	cache.requestsMap[key] = entry
+
+	if entry.lastHit.UnixMicro()-cache.janitor.lastPing.UnixMicro() < IntervalSeparator.Microseconds() {
+		// first interval
+		cache.janitorMap[cache.janitor.lastPing][key] = struct{}{}
+	} else {
+		// second interval
+		cache.janitorMap[cache.janitor.nextPing][key] = struct{}{}
+	}
 }
 
 func buildKeyFromRequest(fs *database.FileSearchRequest) string {
