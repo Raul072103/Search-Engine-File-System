@@ -4,13 +4,16 @@ import (
 	"MyFileExporer/backend/internal/repo/database"
 	"MyFileExporer/common/models"
 	"slices"
+	"sync"
 	"time"
 )
 
 // DefaultCacheSize is the default size for the slice containing files
 const (
-	DefaultCacheSize = 2048
-	DefaultTTL       = time.Minute * 10
+	DefaultCacheSize  = 2048
+	DefaultTTLMapSize = 2
+	JanitorWakeupTime = time.Minute * 10
+	IntervalSeparator = time.Minute * 5
 )
 
 type Cache struct {
@@ -23,20 +26,23 @@ type cache struct {
 	// janitor handles the clearing of cache
 	janitor *janitor
 	// janitorMap is a map that gets updated each time a new request is cached
-	janitorMap map[uint64]map[string]struct{}
+	janitorMap map[time.Time]map[string]struct{}
+	mutex      sync.RWMutex
 }
 
 type cacheEntry struct {
-	TTL   uint64
-	files []models.File
+	lastHit time.Time
+	files   []models.File
 }
 
 type janitor struct {
+	lastPing time.Time
+	nextPing time.Time
 }
 
 func newCache() *cache {
-	requestMap := make(map[string]*cacheEntry, 2048)
-	janitorMap := make(map[uint64]map[string]struct{}, 24)
+	requestMap := make(map[string]*cacheEntry, DefaultCacheSize)
+	janitorMap := make(map[time.Time]map[string]struct{}, DefaultTTLMapSize)
 
 	return &cache{
 		requestsMap: requestMap,
@@ -48,8 +54,35 @@ func newCache() *cache {
 func (cache *cache) Find(fs *database.FileSearchRequest) []models.File {
 	key := buildKeyFromRequest(fs)
 
+	cache.mutex.RLock()
+	defer cache.mutex.RUnlock()
+
 	entry, cacheHit := cache.requestsMap[key]
 	if cacheHit {
+		// decide which interval to put the current entry
+		if entry.lastHit.UnixMicro()-cache.janitor.lastPing.UnixMicro() < IntervalSeparator.Microseconds() {
+			// first interval
+			// do nothing
+		} else {
+			// second interval
+
+			// this prevents from a deadlock
+			cache.mutex.RUnlock()
+
+			cache.mutex.Lock()
+
+			delete(cache.janitorMap[cache.janitor.lastPing], key)
+			// TODO() janitor always needs instantiate the next map
+			cache.janitorMap[cache.janitor.nextPing][key] = struct{}{}
+
+			cache.mutex.Unlock()
+
+			cache.mutex.RLock() // this reaquires the lock
+		}
+
+		// update entry lastHit
+		entry.lastHit = time.Now()
+
 		return entry.files
 	}
 
