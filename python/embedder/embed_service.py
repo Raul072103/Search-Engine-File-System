@@ -1,7 +1,6 @@
 from fastapi import FastAPI, Request
 from pydantic import BaseModel
 from sentence_transformers import SentenceTransformer
-import torch
 
 app = FastAPI()
 model = SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2")  # Fast & small, good for start

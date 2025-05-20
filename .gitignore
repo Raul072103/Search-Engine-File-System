@@ -18,6 +18,13 @@
 go.work
 go.work.sum
 
+/indexer/config.json
+/indexer/next_usn.json
+/python/.venv
+
+__pycache__/
+*.pyc
+
 .idea
 bin/
 tmp/
