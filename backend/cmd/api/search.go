@@ -42,6 +42,17 @@ func (app *application) searchHandler(w http.ResponseWriter, r *http.Request) {
 		fileSearchRequest.Extension = &extensions
 	}
 
+	if app.cache != nil {
+		files := app.cache.Find(&fileSearchRequest)
+		if files != nil {
+			err := jsonResponse(w, http.StatusOK, files)
+			if err != nil {
+				app.internalServerError(w, r, err)
+				return
+			}
+		}
+	}
+
 	files, err := app.dbRepo.Files.Search(context.Background(), fileSearchRequest)
 	if err != nil {
 		app.internalServerError(w, r, err)
@@ -75,4 +86,6 @@ func (app *application) searchHandler(w http.ResponseWriter, r *http.Request) {
 		app.internalServerError(w, r, err)
 		return
 	}
+
+	app.cache.Add(&fileSearchRequest, files)
 }

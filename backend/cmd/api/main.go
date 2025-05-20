@@ -1,11 +1,13 @@
 package main
 
 import (
+	"MyFileExporer/backend/internal/cache"
 	"MyFileExporer/backend/internal/db"
 	"MyFileExporer/backend/internal/repo/database"
 	"MyFileExporer/backend/internal/repo/vectordb"
 	"MyFileExporer/common/env"
 	"MyFileExporer/common/logger"
+	"context"
 	"expvar"
 	"fmt"
 	"github.com/joho/godotenv"
@@ -82,11 +84,15 @@ func main() {
 	//	panic(err)
 	//}
 
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
 	app := &application{
 		config:     cfg,
 		logger:     zapLogger,
 		dbRepo:     dbRepo,
 		qdrantRepo: vectordb.New(client),
+		cache:      cache.New(ctx),
 	}
 
 	// Metrics collected

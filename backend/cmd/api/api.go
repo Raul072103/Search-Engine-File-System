@@ -1,6 +1,7 @@
 package main
 
 import (
+	"MyFileExporer/backend/internal/cache"
 	"MyFileExporer/backend/internal/repo/database"
 	"MyFileExporer/backend/internal/repo/vectordb"
 	"context"
@@ -21,6 +22,7 @@ type application struct {
 	logger     *zap.Logger
 	dbRepo     database.Repo
 	qdrantRepo vectordb.Repo
+	cache      *cache.Cache
 }
 
 type config struct {

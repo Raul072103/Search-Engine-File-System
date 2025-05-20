@@ -3,6 +3,7 @@ package cache
 import (
 	"MyFileExporer/backend/internal/repo/database"
 	"MyFileExporer/common/models"
+	"context"
 	"slices"
 	"sync"
 	"time"
@@ -19,6 +20,34 @@ const (
 
 type Cache struct {
 	cache *cache
+}
+
+func (cache *Cache) Add(fs *database.FileSearchRequest, files []models.File) {
+	cache.cache.add(fs, files)
+}
+
+func (cache *Cache) Find(fs *database.FileSearchRequest) []models.File {
+	return cache.cache.find(fs)
+}
+
+// New creates a cache.
+// This will start the goroutine that activates the janitor.
+func New(ctx context.Context) *Cache {
+
+	cache := newCache()
+
+	go func() {
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			default:
+				cache.janitorClean()
+			}
+		}
+	}()
+
+	return &Cache{cache: cache}
 }
 
 type cache struct {
@@ -86,7 +115,7 @@ func (cache *cache) janitorClean() {
 	cache.janitor.lastPing = time.Now()
 }
 
-func (cache *cache) Find(fs *database.FileSearchRequest) []models.File {
+func (cache *cache) find(fs *database.FileSearchRequest) []models.File {
 	key := buildKeyFromRequest(fs)
 
 	cache.mutex.RLock()
@@ -124,7 +153,7 @@ func (cache *cache) Find(fs *database.FileSearchRequest) []models.File {
 	return nil
 }
 
-func (cache *cache) Add(fs *database.FileSearchRequest, files []models.File) {
+func (cache *cache) add(fs *database.FileSearchRequest, files []models.File) {
 	key := buildKeyFromRequest(fs)
 
 	cache.mutex.Lock()
