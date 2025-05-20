@@ -50,6 +50,8 @@ func (app *application) searchHandler(w http.ResponseWriter, r *http.Request) {
 				app.internalServerError(w, r, err)
 				return
 			}
+
+			return
 		}
 	}
 
@@ -87,5 +89,6 @@ func (app *application) searchHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	app.cache.Add(&fileSearchRequest, files)
+	// TODO(): understand what is up with this bug?
+	//app.cache.Add(&fileSearchRequest, files)
 }

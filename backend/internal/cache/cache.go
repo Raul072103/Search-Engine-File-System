@@ -70,7 +70,7 @@ type janitor struct {
 	nextPing time.Time
 }
 
-// TODO() instantiate janitor and run it
+// TODO() verify janitor effectiveness
 func newCache() *cache {
 	requestMap := make(map[string]*cacheEntry, DefaultCacheSize)
 	janitorMap := make(map[time.Time]map[string]struct{}, DefaultTTLMapSize)
