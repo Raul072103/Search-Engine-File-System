@@ -10,10 +10,11 @@ import (
 
 // DefaultCacheSize is the default size for the slice containing files
 const (
-	DefaultCacheSize  = 2048
-	DefaultTTLMapSize = 2
-	JanitorWakeupTime = time.Minute * 10
-	IntervalSeparator = time.Minute * 5
+	DefaultCacheSize       = 2048
+	DefaultTTLMapSize      = 2
+	DefaultIntervalMapSize = 24
+	JanitorWakeupTime      = time.Minute * 10
+	IntervalSeparator      = time.Minute * 5
 )
 
 type Cache struct {
@@ -44,15 +45,46 @@ type janitor struct {
 func newCache() *cache {
 	requestMap := make(map[string]*cacheEntry, DefaultCacheSize)
 	janitorMap := make(map[time.Time]map[string]struct{}, DefaultTTLMapSize)
+	janitor := &janitor{
+		lastPing: time.Now(),
+	}
+
+	janitorMap[janitor.lastPing] = make(map[string]struct{}, DefaultIntervalMapSize)
 
 	return &cache{
 		requestsMap: requestMap,
-		janitor:     nil,
+		janitor:     janitor,
 		janitorMap:  janitorMap,
 	}
 }
 
-func (j *janitor) clean() {}
+// clean will run in a separate goroutine.
+// janitor checks every JanitorWakeupTime time and deletes all entries that are younger than janitor.nextPing
+func (cache *cache) janitorClean() {
+	cache.janitor.nextPing = time.UnixMicro(cache.janitor.lastPing.UnixMicro() + JanitorWakeupTime.Microseconds())
+	cache.janitorMap[cache.janitor.nextPing] = make(map[string]struct{}, DefaultIntervalMapSize)
+
+	// wait for a complete interval
+	time.Sleep(JanitorWakeupTime)
+
+	cache.mutex.Lock()
+	defer cache.mutex.Unlock()
+
+	for prevIntervalTIme, entriesMap := range cache.janitorMap {
+
+		if prevIntervalTIme.UnixMicro() > cache.janitor.nextPing.UnixMicro() {
+			break
+		}
+
+		for entryKey := range entriesMap {
+			delete(cache.requestsMap, entryKey)
+		}
+
+		delete(cache.janitorMap, prevIntervalTIme)
+	}
+
+	cache.janitor.lastPing = time.Now()
+}
 
 func (cache *cache) Find(fs *database.FileSearchRequest) []models.File {
 	key := buildKeyFromRequest(fs)
