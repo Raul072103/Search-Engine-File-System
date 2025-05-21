@@ -1,6 +1,7 @@
 package spelling
 
 import (
+	"fmt"
 	"os"
 	"regexp"
 )
@@ -18,9 +19,10 @@ type Corrector struct {
 	totalWords    int
 }
 
-func New() Corrector {
-	return Corrector{
+func New() *Corrector {
+	return &Corrector{
 		internalState: false,
+		appearanceMap: make(map[string]int),
 	}
 }
 
@@ -36,12 +38,7 @@ func (c *Corrector) Initialize() error {
 
 	c.totalWords = len(words)
 	for _, word := range words {
-		_, exists := c.appearanceMap[word]
-		if exists {
-			c.appearanceMap[word] += 1
-		} else {
-			c.appearanceMap[word] = 1
-		}
+		c.appearanceMap[word] += 1
 	}
 
 	c.internalState = true
@@ -54,7 +51,23 @@ func (c *Corrector) Initialized() bool {
 
 // Correction most probable spelling correction for word.
 func (c *Corrector) Correction(word string) string {
-	return ""
+	possibleWords := c.known(c.edits2(word))
+	maxProbability := 0.0
+	bestWord := ""
+
+	fmt.Println(len(possibleWords))
+	fmt.Println(possibleWords)
+
+	for _, possibleWord := range possibleWords {
+		probability := c.wordProbability(possibleWord)
+
+		if probability > maxProbability {
+			maxProbability = probability
+			bestWord = possibleWord
+		}
+	}
+
+	return bestWord
 }
 
 // wordProbability probability of a 'word'.
@@ -63,13 +76,13 @@ func (c *Corrector) wordProbability(word string) float64 {
 }
 
 // known the subset of 'words' that appear in the Corrector.appearanceMap
-func (c *Corrector) known(words []string) map[string]struct{} {
-	knownWords := make(map[string]struct{}, 48)
+func (c *Corrector) known(words []string) []string {
+	knownWords := make([]string, 0)
 
 	for _, word := range words {
 		_, exists := c.appearanceMap[word]
 		if exists {
-			knownWords[word] = struct{}{}
+			knownWords = append(knownWords, word)
 		}
 	}
 
@@ -133,15 +146,15 @@ func (c *Corrector) edits1(word string) map[string]struct{} {
 }
 
 // edits2 all edits that are two edits away from 'word'
-func (c *Corrector) edits2(word string) map[string]struct{} {
+func (c *Corrector) edits2(word string) []string {
 	edits1 := c.edits1(word)
-	edits2 := make(map[string]struct{}, len(edits1)*len(edits1))
+	edits2 := make([]string, len(edits1)*len(edits1))
 
 	for edit := range edits1 {
 		newEdits := c.edits1(edit)
 
 		for newEdit := range newEdits {
-			edits2[newEdit] = struct{}{}
+			edits2 = append(edits2, newEdit)
 		}
 	}
 

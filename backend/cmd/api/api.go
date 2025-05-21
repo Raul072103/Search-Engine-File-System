@@ -4,6 +4,7 @@ import (
 	"MyFileExporer/backend/internal/cache"
 	"MyFileExporer/backend/internal/repo/database"
 	"MyFileExporer/backend/internal/repo/vectordb"
+	"MyFileExporer/backend/internal/spelling"
 	"context"
 	"errors"
 	"github.com/go-chi/chi/v5"
@@ -18,11 +19,12 @@ import (
 )
 
 type application struct {
-	config     config
-	logger     *zap.Logger
-	dbRepo     database.Repo
-	qdrantRepo vectordb.Repo
-	cache      *cache.Cache
+	config            config
+	logger            *zap.Logger
+	dbRepo            database.Repo
+	qdrantRepo        vectordb.Repo
+	cache             *cache.Cache
+	spellingCorrector *spelling.Corrector
 }
 
 type config struct {
