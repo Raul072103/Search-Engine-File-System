@@ -67,6 +67,7 @@ func (app *application) mount() *chi.Mux {
 		// Endpoints for the API
 		r.Get("/search", app.searchHandler)
 		r.Get("/query-suggestions", app.querySuggestions)
+		r.Get("/query-spell-corrector", app.spellCollector)
 	})
 
 	return mux
