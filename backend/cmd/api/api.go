@@ -108,6 +108,14 @@ func (app *application) run(mux *chi.Mux) error {
 		return err
 	}
 
+	// Start spelling corrector
+	go func() {
+		err := app.spellingCorrector.Initialize()
+		if err != nil {
+			app.logger.Error("spelling corrector initialization failed", zap.Error(err))
+		}
+	}()
+
 	err = <-shutdown
 	if err != nil {
 		return err
