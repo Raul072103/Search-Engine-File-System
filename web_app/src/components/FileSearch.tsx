@@ -11,6 +11,7 @@ const FileSearch: React.FC = () => {
 
     const [searchQuery, setSearchQuery] = useState("");
     const [suggestions, setSuggestions] = useState<string[]>([]);
+    const [corrections, setCorrections] = useState<string[]>([]);
     const [results, setResults] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -139,6 +140,61 @@ const FileSearch: React.FC = () => {
         return () => controller.abort();
     }, [searchQuery]);
 
+    useEffect(() => {
+        const controller = new AbortController();
+
+        const fetchCorrections = async () => {
+            try {
+                const query = new URLSearchParams();
+                if (searchParams.word_list) {
+                    searchParams.word_list.split(/\s+/)
+                        .filter(word => word != "")
+                        .forEach(word => query.append("word_list", word));
+                }
+                if (searchParams.file_name) query.append("file_name", searchParams.file_name);
+
+                const res = await fetch(`http://localhost:8080/v1/query-spell-corrector?${query.toString()}`, {
+                    method: "GET",
+                    headers: { "Content-Type": "application/json" },
+                });
+
+                if (!res.ok) {
+                    throw new Error(`HTTP error! Status: ${res.status}`);
+                }
+
+                const data = await res.json();
+                const { file_name_suggestion, word_list_suggestions } = data;
+
+                // Reconstruct the suggested query
+                const suggestedWords = word_list_suggestions.join(" ").trim();
+                const suggestedQueryParts = [];
+
+                if (suggestedWords) {
+                    suggestedQueryParts.push(`content:${word_list_suggestions.join(",")}`);
+                }
+
+                if (file_name_suggestion)
+                    suggestedQueryParts.push(`name:${file_name_suggestion}`);
+
+                const suggestedQuery = suggestedQueryParts.join(" ");
+
+                // Show only if it differs from the original query
+                if (suggestedQuery.trim() && suggestedQuery.trim() !== searchQuery.trim()) {
+                    setCorrections([suggestedQuery]);
+                } else {
+                    setCorrections([]);
+                }
+
+            } catch (err) {
+                console.error("Error fetching corrections:", err);
+            }
+        };
+
+        fetchCorrections();
+        return () => controller.abort();
+    }, [searchParams]);
+
+
     // Pagination Logic
     const totalPages = Math.ceil(results.length / RESULTS_PER_PAGE);
     const startIndex = (currentPage - 1) * RESULTS_PER_PAGE;
@@ -180,6 +236,25 @@ const FileSearch: React.FC = () => {
                     value={searchParams.extensions}
                 />
             </div>
+
+            {/* Corrections */}
+            {corrections.length > 0 && (
+                <div style={{ marginTop: "8px", marginBottom: "16px" }}>
+                    <strong>Did you mean:</strong>
+                    <ul>
+                        {corrections.map((correction, idx) => (
+                            <li
+                                key={idx}
+                                style={{ cursor: "pointer", color: "darkorange" }}
+                                onClick={() => setSearchQuery(correction)}
+                            >
+                                {correction}
+                            </li>
+                        ))}
+                    </ul>
+                </div>
+            )}
+
 
             {/* Suggestions */}
             <div style={{ marginTop: "8px", marginBottom: "16px" }}>

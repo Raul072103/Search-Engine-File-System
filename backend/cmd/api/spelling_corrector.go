@@ -1,6 +1,9 @@
 package main
 
-import "net/http"
+import (
+	"fmt"
+	"net/http"
+)
 
 type Suggestion struct {
 	FileNameSuggestion  string   `json:"file_name_suggestion"`
@@ -17,16 +20,20 @@ func (app *application) spellCollector(w http.ResponseWriter, r *http.Request) {
 
 	suggestion := Suggestion{
 		FileNameSuggestion:  "",
-		WordListSuggestions: make([]string, len(wordList)),
+		WordListSuggestions: make([]string, 0),
 	}
+
+	fmt.Println("AICI")
 
 	if app.spellingCorrector.Initialized() {
 		// file name
-		fileNameSuggestion := app.spellingCorrector.Correction(fileName)
-		if fileNameSuggestion != "" {
-			suggestion.FileNameSuggestion = fileNameSuggestion
-		} else {
-			suggestion.FileNameSuggestion = fileName
+		if fileName != "" {
+			fileNameSuggestion := app.spellingCorrector.Correction(fileName)
+			if fileNameSuggestion != "" {
+				suggestion.FileNameSuggestion = fileNameSuggestion
+			} else {
+				suggestion.FileNameSuggestion = fileName
+			}
 		}
 
 		// words

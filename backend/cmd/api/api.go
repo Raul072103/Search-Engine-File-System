@@ -84,6 +84,14 @@ func (app *application) run(mux *chi.Mux) error {
 		IdleTimeout:  time.Minute,
 	}
 
+	// Start spelling corrector
+	go func() {
+		err := app.spellingCorrector.Initialize()
+		if err != nil {
+			app.logger.Error("spelling corrector initialization failed", zap.Error(err))
+		}
+	}()
+
 	// graceful shutdown
 	shutdown := make(chan error)
 
@@ -107,14 +115,6 @@ func (app *application) run(mux *chi.Mux) error {
 	if !errors.Is(err, http.ErrServerClosed) {
 		return err
 	}
-
-	// Start spelling corrector
-	go func() {
-		err := app.spellingCorrector.Initialize()
-		if err != nil {
-			app.logger.Error("spelling corrector initialization failed", zap.Error(err))
-		}
-	}()
 
 	err = <-shutdown
 	if err != nil {

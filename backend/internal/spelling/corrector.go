@@ -1,7 +1,6 @@
 package spelling
 
 import (
-	"fmt"
 	"os"
 	"regexp"
 )
@@ -55,9 +54,6 @@ func (c *Corrector) Correction(word string) string {
 	maxProbability := 0.0
 	bestWord := ""
 
-	fmt.Println(len(possibleWords))
-	fmt.Println(possibleWords)
-
 	for _, possibleWord := range possibleWords {
 		probability := c.wordProbability(possibleWord)
 
@@ -91,16 +87,15 @@ func (c *Corrector) known(words []string) []string {
 
 // edits1 all edits that are one edit away from 'word'
 func (c *Corrector) edits1(word string) map[string]struct{} {
-	splits := make(map[string]string, len(word)+1)
+	splits := make(map[string]string)
 	for i := 0; i < len(word)+1; i++ {
 		L := word[:i]
 		R := word[i:]
-		i += 1
 
 		splits[L] = R
 	}
 
-	edits := make(map[string]struct{}, 2*len(splits)+2*len(splits)*len(Letters))
+	edits := make(map[string]struct{})
 
 	// deletes
 	for L := range splits {
@@ -148,7 +143,7 @@ func (c *Corrector) edits1(word string) map[string]struct{} {
 // edits2 all edits that are two edits away from 'word'
 func (c *Corrector) edits2(word string) []string {
 	edits1 := c.edits1(word)
-	edits2 := make([]string, len(edits1)*len(edits1))
+	edits2 := make([]string, 0)
 
 	for edit := range edits1 {
 		newEdits := c.edits1(edit)
