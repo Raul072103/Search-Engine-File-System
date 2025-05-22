@@ -3,6 +3,7 @@ package spelling
 import (
 	"os"
 	"regexp"
+	"strings"
 )
 
 const (
@@ -37,7 +38,7 @@ func (c *Corrector) Initialize() error {
 
 	c.totalWords = len(words)
 	for _, word := range words {
-		c.appearanceMap[word] += 1
+		c.appearanceMap[strings.ToLower(word)] += 1
 	}
 
 	c.internalState = true
@@ -50,11 +51,32 @@ func (c *Corrector) Initialized() bool {
 
 // Correction most probable spelling correction for word.
 func (c *Corrector) Correction(word string) string {
-	possibleWords := c.known(c.edits2(word))
+	word = strings.ToLower(word)
 	maxProbability := 0.0
 	bestWord := ""
 
-	for _, possibleWord := range possibleWords {
+	if _, wordExists := c.appearanceMap[word]; wordExists {
+		return ""
+	}
+
+	edits1 := make([]string, 0)
+	for edit1Word := range c.edits1(word) {
+		edits1 = append(edits1, edit1Word)
+	}
+
+	possibleWords1 := c.known(edits1)
+	for _, possibleWord := range possibleWords1 {
+		probability := c.wordProbability(possibleWord)
+
+		if probability > maxProbability {
+			maxProbability = probability
+			bestWord = possibleWord
+		}
+	}
+
+	possibleWords2 := c.known(c.edits2(word))
+
+	for _, possibleWord := range possibleWords2 {
 		probability := c.wordProbability(possibleWord)
 
 		if probability > maxProbability {
