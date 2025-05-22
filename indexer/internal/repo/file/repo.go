@@ -38,7 +38,7 @@ func (fr *fileRepo) Read(path string) (*models.File, error) {
 		return file, err
 	}
 
-	if fr.typeMap.GetTypeByExtension(file.Extension) == "txt" {
+	if file.Extension != "" {
 		data, err := os.ReadFile(path)
 		if err != nil {
 			return nil, err
