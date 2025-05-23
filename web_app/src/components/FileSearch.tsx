@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import extensionLanguageMap from "../utils/extensionLanguageMap";
 
 const RESULTS_PER_PAGE = 3; // Number of results per page
 
@@ -16,6 +17,32 @@ const FileSearch: React.FC = () => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [currentPage, setCurrentPage] = useState(1);
+
+    const [summary, setSummary] = useState({
+        fileTypes: {} as Record<string, number>,
+        modifiedYears: {} as Record<string, number>,
+    });
+
+    useEffect(() => {
+        if (results.length === 0) {
+            setSummary({ fileTypes: {}, modifiedYears: {} });
+            return;
+        }
+
+        const fileTypes: Record<string, number> = {};
+        const modifiedYears: Record<string, number> = {};
+
+        results.forEach((file) => {
+            const ext = file.Extension || "Unknown";
+            fileTypes[ext] = (fileTypes[ext] || 0) + 1;
+
+            const year = new Date(file.UpdatedAt).getFullYear().toString();
+            modifiedYears[year] = (modifiedYears[year] || 0) + 1;
+        });
+
+        setSummary({ fileTypes, modifiedYears });
+    }, [results]);
+
 
     useEffect(() => {
         // Don't fetch if all inputs are empty
@@ -200,6 +227,7 @@ const FileSearch: React.FC = () => {
     const startIndex = (currentPage - 1) * RESULTS_PER_PAGE;
     const displayedResults = results.slice(startIndex, startIndex + RESULTS_PER_PAGE);
 
+    // @ts-ignore
     return (
         <div>
             {/* Parser Input */}
@@ -275,6 +303,37 @@ const FileSearch: React.FC = () => {
                     </div>
                 )}
             </div>
+
+            {/* Metadata Summary */}
+            {results.length > 0 && (
+                <div style={{margin: "16px 0", padding: "12px", borderRadius: "8px"}}>
+                    <h3>Summary</h3>
+
+                    <div>
+                        <strong>File Types:</strong>{" "}
+                        {Object.entries(summary.fileTypes)
+                            .sort(([, a], [, b]) => b - a)
+                            .map(([ext, count]) => `${ext.toUpperCase().slice(1)} (${count})`)
+                            .join(", ")}
+                    </div>
+
+                    <div>
+                        <strong>Modified Years:</strong>{" "}
+                        {Object.entries(summary.modifiedYears)
+                            .sort(([a,], [b,]) => b - a)
+                            .map(([year, count]) => `${year} (${count})`)
+                            .join(", ")}
+                    </div>
+
+                    <div>
+                        <strong>Language:</strong>{" "}
+                        {Object.entries(summary.fileTypes)
+                            .sort(([, a], [, b]) => b - a) // Sort by count descending
+                            .map(([ext, count]) => `${extensionLanguageMap[ext.toLowerCase()]} (${count})`)
+                            .join(", ")}
+                    </div>
+                </div>
+            )}
 
             {/* Display Results */}
             <div>
