@@ -59,8 +59,14 @@ func (r *fileRepo) Insert(ctx context.Context, file *models.File) error {
 			return err
 		}
 
-		if r.typesMap.TypesMapping[file.Type.TypeID] == "txt" {
+		if r.typesMap.TypesMapping[file.Type.TypeID] == "txt" ||
+			r.typesMap.TypesMapping[file.Type.TypeID] == "code" {
 			err = r.insertTxtFileContent(ctx, tx, file)
+			if err != nil {
+				return err
+			}
+		} else {
+			err = r.insertFileContentForPreview(ctx, tx, file)
 			if err != nil {
 				return err
 			}
@@ -285,6 +291,38 @@ func (r *fileRepo) insertTxtFileContent(ctx context.Context, tx *sql.Tx, file *m
 		file.ID,
 		fileContent.Text[:min(databaseTextCache, len(fileContent.Text))],
 		fileContent.Text,
+		file.UpdatedAt,
+	).Scan(&fileContent.ID)
+
+	if err != nil {
+		var pqErr *pq.Error
+		if errors.As(err, &pqErr) && pqErr.Code == "23505" {
+			return ErrConflict
+		}
+	}
+
+	return err
+}
+
+// insertFileContentForPreview helper method to insert the content of the file in "contents" table.
+// This function is specific for files that tsvector cannot perform search on them but the user should be able
+// to preview them
+func (r *fileRepo) insertFileContentForPreview(ctx context.Context, tx *sql.Tx, file *models.File) error {
+	fileContent := &file.Content
+
+	query := `
+		INSERT INTO contents (file_id, content_text, updated_at)
+		VALUES ($1, $2::TEXT, $3) RETURNING id
+	`
+
+	ctx, cancel := context.WithTimeout(ctx, InsertFileTimeoutDuration)
+	defer cancel()
+
+	err := tx.QueryRowContext(
+		ctx,
+		query,
+		file.ID,
+		fileContent.Text[:min(databaseTextCache, len(fileContent.Text))],
 		file.UpdatedAt,
 	).Scan(&fileContent.ID)
 
