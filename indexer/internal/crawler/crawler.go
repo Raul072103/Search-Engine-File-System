@@ -111,8 +111,6 @@ func (c *crawler) Crawl(ctx context.Context, startPath string) {
 			c.eventsQueue.Push(insertEvent)
 
 			if fileModel.Extension == "" {
-				// Save the fileID as the next parentID
-				parentID = fileModel.WindowsFileID
 
 				entries, err := os.ReadDir(path)
 				if err != nil {

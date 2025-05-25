@@ -9,6 +9,7 @@ import (
 	"MyFileExporer/common/env"
 	"MyFileExporer/common/logger"
 	"context"
+	"database/sql"
 	"expvar"
 	"fmt"
 	"github.com/joho/godotenv"
@@ -60,7 +61,12 @@ func main() {
 		cfg.db.maxOpenConns,
 		cfg.db.maxIdleConns,
 		cfg.db.maxIdleTime)
-	defer pgDb.Close()
+	defer func(pgDb *sql.DB) {
+		err := pgDb.Close()
+		if err != nil {
+			zapLogger.Fatal("error closing db", zap.Error(err))
+		}
+	}(pgDb)
 
 	if err != nil {
 		zapLogger.Fatal("db error", zap.Error(err))

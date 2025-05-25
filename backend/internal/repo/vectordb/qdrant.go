@@ -52,6 +52,9 @@ func (r *repo) SuggestSimilarQueries(input string, limit *uint64) ([]string, err
 		Limit:          limit,
 		WithPayload:    qdrant.NewWithPayloadInclude("text"),
 	})
+	if err != nil {
+		return nil, err
+	}
 
 	var suggestions = make([]string, 0)
 	for _, hit := range searchResult {
