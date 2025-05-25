@@ -1,89 +1,29 @@
-# Search Engine for my File System
+# Search Engine for Windows File System
 
-This is going to be a project built by me consisting in a search engine designed for my file system.
+This was the project that I had to construct for Software Design course as a 
+laboratory work that spanned the whole semester.
 
-## Features
+It turned out a quite nice project, with some interesting features.
 
-- [ ] Crawl local content
-- [ ] Filter unwanted data (configurable at runtime)
-- [ ] Store data into database
-- [ ] File previews are crucial
-- [ ] Content search over contextual files (single/multi word, name, path, extensions)
+# Context
 
-## Notes
+The main goal was to design a responsive file search system, by indexing the
+file system before hand.
 
-- USN Journal
-- Master-slave format
-- Not going to take into consideration links from the start
-- What about hidden files?
-- Probably build a in-memory cache with the search results based on the timestamp (this way the most relevant results 
-are shown to the user)
+It turned out faster than I expected, by using Postgres as a database for storing
+the structures and data required for indexing the files.
 
-## Search Criteria
-- Single/multi world 
-- Name
-- Extension
+# Interesting Features
 
-## System Requirements
-
-### 1. Text search
-
-#### Option 1
-For a functional single/multi word search I thought of using a table like:
-
-| Id | Word    | Document|
-|----|---------| ---     |
-| 1  | "ceapa" | "reteta.txt"|
-
-Total words = approx **68.045.814**
-
-Assume avg word = approx **5 chars**
-
-Assume I use a foreign key to a document Id
-
-For a row in my database (not taking into consideration the index tables created)
-
-**1 row** = approx (8 bytes PK) + (2 bytes * 5) + (8 bytes FK)
-**1 row** = 40 bytes (I added 12 bytes extra just to be sure, plus I don't take into cosnideration a lot of things)
-
-**Total storage space just for the search feature** = 40 bytes * 68.045.814
-
-**space** = 2,721,832,560 **bytes**
-
-**space** = 2.71 **GB**
-
-This would mean **at least** 
-
-#### Option 2
-
-Use GIN indexes from Postgres, which are basically what I described above.
-
-GIN (Generalized Inverted Index)
-
-#### Option 3
-
-Use **tsvector**, **tsquery**. 
-
-#### Option 2 + Option 3
-
-What I read is something where I combine a GIN index and a **tsvector** but this will
-require me to **store** also **the content** of the files which seems to
-memory expensive.
-
-```
-CREATE INDEX pgweb_idx ON pgweb USING GIN (to_tsvector('english', body));
-```
-
-### Conclusion
-
-I think I will stick with **Option 1** where I create a table I mentioned and where
-I will put a **GIN** index.
-
-
-### Questions
-
-- Opinions on my battle plan
-- **Do we want exact matches for what the user is looking for?**
-- Can I use Elastic Search or should I try and implement something simillar by myself?
-- Access denied files
-- Different file encodings
+- the project supports searching through the file system by words
+- Designed quite a nice architecture for processing the indexing, using
+events (check **ARCHITECTURE.md**)
+- I integrated the project so it can parse **USN Journal** logs 
+obtained from querying Windows Internals. This lead to the indexer
+being capable to detect changes at runtime, even if the indexer
+was shut down before.
+- I used **Qdrant** that allowed to **suggest queries** to
+the user of the web application by storing all the previous
+queries and calculating the cosine similarity of the current
+query and its previous queries.
+- Created an **in-memory cache** in Go for repeating queries
