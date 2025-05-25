@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import extensionLanguageMap from "../utils/extensionLanguageMap";
+import extensionLanguageMap from "../utils/ExtensionLanguageMap";
 
 const RESULTS_PER_PAGE = 3; // Number of results per page
 
@@ -320,7 +320,7 @@ const FileSearch: React.FC = () => {
                     <div>
                         <strong>Modified Years:</strong>{" "}
                         {Object.entries(summary.modifiedYears)
-                            .sort(([a,], [b,]) => b - a)
+                            .sort(([a,], [b,]) => Number(b) - Number(a))
                             .map(([year, count]) => `${year} (${count})`)
                             .join(", ")}
                     </div>
