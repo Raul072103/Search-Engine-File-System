@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from "react";
 import extensionLanguageMap from "../utils/ExtensionLanguageMap";
+import { WidgetFactory, Summary } from "./widgets/WidgetFactory";
+import "./widgets";
 
 const RESULTS_PER_PAGE = 3; // Number of results per page
 
@@ -18,9 +20,9 @@ const FileSearch: React.FC = () => {
     const [error, setError] = useState<string | null>(null);
     const [currentPage, setCurrentPage] = useState(1);
 
-    const [summary, setSummary] = useState({
-        fileTypes: {} as Record<string, number>,
-        modifiedYears: {} as Record<string, number>,
+    const [summary, setSummary] = useState<Summary>({
+        fileTypes: {},
+        modifiedYears: {}
     });
 
     useEffect(() => {
@@ -221,6 +223,7 @@ const FileSearch: React.FC = () => {
         return () => controller.abort();
     }, [searchParams]);
 
+    const activeWidgets = WidgetFactory.getActiveWidgets(searchQuery, summary);
 
     // Pagination Logic
     const totalPages = Math.ceil(results.length / RESULTS_PER_PAGE);
@@ -263,6 +266,18 @@ const FileSearch: React.FC = () => {
                     placeholder="Extensions (comma-separated)"
                     value={searchParams.extensions}
                 />
+            </div>
+
+            {/* Render active widgets */}
+            <div style={{ margin: "16px 0" }}>
+                {activeWidgets.length > 0 && (
+                    <div>
+                        <h3>Recommended Actions</h3>
+                        {activeWidgets.map(({ id, Component }) => (
+                            <Component key={id} />
+                        ))}
+                    </div>
+                )}
             </div>
 
             {/* Corrections */}
